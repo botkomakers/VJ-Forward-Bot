@@ -1,48 +1,39 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
 from config import Config
 from database import db
+import asyncio
 import time
 
-@Client.on_message(filters.command("cleandup") & filters.private)
-async def cleandup_start(client, message: Message):
+# Command to choose a channel for duplicate cleaning
+@Client.on_message(filters.command("cleandup"))
+async def choose_channel(client, message: Message):
     user_id = message.from_user.id
+    channels = await db.get_user_channels(user_id)
+
+    if not channels:
+        return await message.reply("❌ You haven't added any channels yet.")
+
+    buttons = [
+        [InlineKeyboardButton(f"📺 {ch.get('title', 'Channel')}", callback_data=f"udup_{ch['chat_id']}")]
+        for ch in channels
+    ]
+    buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel_clean")])
+
     await message.reply(
-        "🔁 দয়া করে **তোমার চ্যানেল থেকে একটি পোস্ট ফরোয়ার্ড করো**\n"
-        "অথবা চ্যানেলের @username / chat ID পাঠাও যেখান থেকে ডুপ্লিকেট ভিডিও মুছতে চাও।"
+        "**Select a channel to scan and delete duplicate videos:**",
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
-    await db.set_user_state(user_id, "awaiting_channel_input")
 
-@Client.on_message(filters.private & filters.text)
-async def handle_text_or_forward(client, message: Message):
-    user_id = message.from_user.id
-    state = await db.get_user_state(user_id)
-    if state != "awaiting_channel_input":
-        return
-
-    await db.set_user_state(user_id, None)  # reset state
-    chat_id = None
-
-    # ফরওয়ার্ড করা চ্যানেল থেকে ID
-    if message.forward_from_chat:
-        chat_id = message.forward_from_chat.id
-    else:
-        # @username বা -1001234567890
-        try:
-            text = message.text.strip()
-            chat_id = int(text) if text.startswith("-100") else text
-        except:
-            return await message.reply("❌ সঠিক চ্যানেল ইউজারনেম বা আইডি দিন।")
-
-    # ডুপ্লিকেট ক্লিনার কল করো
-    await clean_duplicates(client, message, user_id, chat_id)
-
-async def clean_duplicates(client, message: Message, user_id: int, chat_id):
+# Callback handler to start scanning and cleaning
+@Client.on_callback_query(filters.regex(r"^udup_"))
+async def start_dup_cleaning(client, cb: CallbackQuery):
+    user_id = cb.from_user.id
+    chat_id = int(cb.data.split("_")[1])
     userbot_data = await db.get_userbot(user_id)
-    if not userbot_data:
-        return await message.reply("❌ আপনি এখনো ইউজারবট সেশন যোগ করেননি।")
 
-    await message.reply(f"🔍 `{chat_id}` চ্যানেলে ডুপ্লিকেট ভিডিও খোঁজা হচ্ছে...")
+    if not userbot_data:
+        return await cb.message.edit("❌ You haven't added your userbot session yet.")
 
     userbot = Client(
         name=str(user_id),
@@ -50,6 +41,9 @@ async def clean_duplicates(client, message: Message, user_id: int, chat_id):
         api_hash=Config.API_HASH,
         session_string=userbot_data['session']
     )
+
+    await cb.answer("Starting scan...")
+    await cb.message.edit(f"🔎 Scanning channel `{chat_id}` for duplicate videos...")
 
     await userbot.start()
     seen = set()
@@ -72,10 +66,10 @@ async def clean_duplicates(client, message: Message, user_id: int, chat_id):
                 deleted += len(dup_ids)
                 dup_ids.clear()
 
-                await message.reply(
-                    f"🔄 স্ক্যান চলছে...\n"
-                    f"স্ক্যান: `{total}`\n"
-                    f"ডিলিট: `{deleted}`"
+                await cb.message.edit(
+                    f"🔄 Scanning in progress...\n\n"
+                    f"• Total scanned: `{total}`\n"
+                    f"• Duplicates deleted: `{deleted}`"
                 )
 
         if dup_ids:
@@ -83,13 +77,22 @@ async def clean_duplicates(client, message: Message, user_id: int, chat_id):
             deleted += len(dup_ids)
 
         duration = round(time.time() - start_time, 2)
-        await message.reply(
-            f"✅ **ডুপ্লিকেট ক্লিন শেষ!**\n\n"
-            f"মোট স্ক্যান: `{total}`\n"
-            f"ডিলিট হয়েছে: `{deleted}` ভিডিও\n"
-            f"সময় লেগেছে: `{duration} সেকেন্ড`"
+
+        await cb.message.edit(
+            f"✅ **Duplicate Cleanup Complete!**\n\n"
+            f"• Scanned Messages: `{total}`\n"
+            f"• Deleted Duplicates: `{deleted}`\n"
+            f"• Time Taken: `{duration} seconds`\n\n"
+            f"✨ Thank you for using **Duplicate Cleaner Bot!**"
         )
+
     except Exception as e:
-        await message.reply(f"⚠️ ত্রুটি:\n`{e}`")
+        await cb.message.edit(f"⚠️ An error occurred:\n`{e}`")
     finally:
         await userbot.stop()
+
+# Cancel handler
+@Client.on_callback_query(filters.regex("cancel_clean"))
+async def cancel_cb(client, cb: CallbackQuery):
+    await cb.answer("Cancelled", show_alert=True)
+    await cb.message.edit("❌ Duplicate cleanup operation has been cancelled.")
