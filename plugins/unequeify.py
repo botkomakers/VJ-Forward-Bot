@@ -19,6 +19,7 @@ async def unequify(client, message: Message):
     if temp.lock.get(user_id):
         return await message.reply("Please wait for the previous task to complete.")
 
+    # Check if userbot exists
     _bot = await db.get_userbot(user_id)
     if not _bot:
         return await message.reply("**Userbot not found. Please add it from /settings.**")
@@ -49,6 +50,7 @@ async def unequify(client, message: Message):
     sts = await confirm.reply("⏳ Connecting and scanning...")
 
     try:
+        # Get the userbot client and start it
         bot = await get_client(_bot['session'])
         await bot.start()
     except Exception as e:
