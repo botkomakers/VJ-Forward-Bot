@@ -4,7 +4,7 @@ from config import Config, temp
 from database import db
 import asyncio
 
-@Client.on_message(filters.command("cleandup") & filters.user(Config.BOT_OWNER))
+@Client.on_message(filters.command("cleandup"))
 async def choose_channel(client, message: Message):
     user_id = message.from_user.id
     channels = await db.get_user_channels(user_id)
