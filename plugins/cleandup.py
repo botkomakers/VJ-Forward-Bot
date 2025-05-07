@@ -5,7 +5,6 @@ from database import db
 import asyncio
 import time
 
-# ✅ সকল ইউজারের জন্য /cleandup কমান্ড
 @Client.on_message(filters.command("cleandup"))
 async def choose_channel(client, message: Message):
     user_id = message.from_user.id
@@ -13,12 +12,16 @@ async def choose_channel(client, message: Message):
     if not channels:
         return await message.reply("❌ You haven't added any channels yet.")
 
-    btns = []
-    for ch in channels:
-        title = ch.get("title", "Channel")
-        btns.append([InlineKeyboardButton(title, callback_data=f"udup_{ch['chat_id']}")])
+    btns = [
+        [InlineKeyboardButton(ch.get("title", "Channel"), callback_data=f"udup_{ch['chat_id']}")]
+        for ch in channels
+    ]
     btns.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel_clean")])
-    await message.reply("Select a channel to remove duplicate videos:", reply_markup=InlineKeyboardMarkup(btns))
+
+    await message.reply(
+        "**🧹 Duplicate Cleaner**\n\nSelect a channel to scan and delete duplicate videos:",
+        reply_markup=InlineKeyboardMarkup(btns)
+    )
 
 
 @Client.on_callback_query(filters.regex(r"^udup_"))
@@ -38,7 +41,7 @@ async def start_dup_cleaning(client, cb: CallbackQuery):
     )
 
     await cb.answer("Starting scan...")
-    await cb.message.edit(f"🔎 Scanning `{chat_id}` for duplicate videos...")
+    await cb.message.edit("⏳ Connecting to userbot and scanning for duplicates...")
 
     await userbot.start()
     seen = set()
@@ -60,29 +63,28 @@ async def start_dup_cleaning(client, cb: CallbackQuery):
                 await userbot.delete_messages(chat_id, dup_ids)
                 deleted += len(dup_ids)
                 dup_ids.clear()
-
                 await cb.message.edit(
-                    f"🔄 Scanning...\n"
-                    f"Processed: `{total}` messages\n"
-                    f"Deleted: `{deleted}` duplicates"
+                    f"🔄 **Scanning in progress...**\n\n"
+                    f"🧾 Processed: `{total}` messages\n"
+                    f"🗑️ Deleted so far: `{deleted}` duplicates"
                 )
 
         if dup_ids:
             await userbot.delete_messages(chat_id, dup_ids)
             deleted += len(dup_ids)
 
-        duration = time.time() - start_time
+        duration = round(time.time() - start_time, 2)
 
         await cb.message.edit(
-            f"✅ **Cleanup Complete!**\n\n"
-            f"🔍 **Total Messages Scanned:** `{total}`\n"
-            f"🗃️ **Duplicate Videos Deleted:** `{deleted}`\n"
-            f"⏱️ **Time Taken:** `{round(duration, 2)} seconds`\n\n"
-            f"✨ _Thank you for using the Duplicate Cleaner Bot!_"
+            f"✅ **Duplicate Cleanup Complete!**\n\n"
+            f"📊 **Total Scanned:** `{total}` messages\n"
+            f"🗃️ **Total Duplicates Deleted:** `{deleted}`\n"
+            f"⏱️ **Time Taken:** `{duration} seconds`\n\n"
+            f"✨ _Thanks for using this bot! Keep your channels clean and efficient._"
         )
 
     except Exception as e:
-        await cb.message.edit(f"⚠️ Error occurred:\n`{e}`")
+        await cb.message.edit(f"⚠️ **An error occurred:**\n`{e}`")
     finally:
         await userbot.stop()
 
@@ -90,4 +92,4 @@ async def start_dup_cleaning(client, cb: CallbackQuery):
 @Client.on_callback_query(filters.regex("cancel_clean"))
 async def cancel_cb(client, cb: CallbackQuery):
     await cb.answer("❌ Cancelled", show_alert=True)
-    await cb.message.edit("Duplicate cleanup has been cancelled.")
+    await cb.message.edit("🚫 Duplicate cleanup cancelled.")
