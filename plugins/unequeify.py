@@ -1,25 +1,22 @@
-import re
-import base64
-import asyncio
-import struct
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from pyrogram.file_id import FileId
-from database import db
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from config import temp
+from database import db
 from .test import get_client
-from script import Script
+import re, base64, struct
+from pyrogram.file_id import FileId
 
 COMPLETED_BTN = InlineKeyboardMarkup([
     [InlineKeyboardButton('💟 Support Group', url='https://t.me/VJ_Bot_Disscussion')],
-    [InlineKeyboardButton('💠 Update Channel', url='https://t.me/vj_botz')]
+    [InlineKeyboardButton('💠 Updates Channel', url='https://t.me/vj_botz')]
 ])
+
 CANCEL_BTN = InlineKeyboardMarkup([[InlineKeyboardButton('• Cancel', 'terminate_frwd')]])
 
-
+# File ID utilities
 def encode_file_id(s: bytes) -> str:
     r, n = b"", 0
-    for i in s + bytes([22, 4]):
+    for i in s + bytes([22]) + bytes([4]):
         if i == 0:
             n += 1
         else:
@@ -29,112 +26,102 @@ def encode_file_id(s: bytes) -> str:
             r += bytes([i])
     return base64.urlsafe_b64encode(r).decode().rstrip("=")
 
-
 def unpack_new_file_id(new_file_id):
     decoded = FileId.decode(new_file_id)
-    return encode_file_id(
-        struct.pack("<iiqq", int(decoded.file_type), decoded.dc_id, decoded.media_id, decoded.access_hash)
-    )
-
+    return encode_file_id(struct.pack("<iiqq", int(decoded.file_type), decoded.dc_id, decoded.media_id, decoded.access_hash))
 
 @Client.on_message(filters.command("unequify") & filters.private)
-async def unequify(client, message):
+async def unequify(client, message: Message):
     user_id = message.from_user.id
     temp.CANCEL[user_id] = False
-
-    if temp.lock.get(user_id) == "True":
-        return await message.reply("**Please wait until the previous task is complete.**")
+    if temp.lock.get(user_id):
+        return await message.reply("Please wait for the previous task to complete.")
 
     _bot = await db.get_userbot(user_id)
     if not _bot:
-        return await message.reply("**You need to set a userbot session using /settings first.**")
+        return await message.reply("**Userbot not found. Please add it from /settings.**")
 
-    try:
-        target = await client.ask(user_id, "**Forward the last message from the target chat or paste message link.**\n/cancel - Cancel process")
-    except:
-        return
-
+    # Ask for message link or forward
+    target = await client.ask(user_id, "**Send a forwarded message or message link from the target channel/group**\n/cancel to cancel")
     if target.text and target.text.startswith("/"):
-        return await message.reply("**Process cancelled!**")
+        return await message.reply("**Cancelled.**")
 
+    # Parse chat ID and message ID
     chat_id, last_msg_id = None, None
-
     if target.text:
-        match = re.match(r"(https://)?(t\.me|telegram\.me|telegram\.dog)/(c/)?([a-zA-Z0-9_]+)/(\d+)", target.text)
+        match = re.match(r"(https://)?t\.me/(c/)?([\w\d_]+)/?(\d+)?", target.text.strip())
         if not match:
             return await message.reply("**Invalid message link.**")
-        username_or_id = match.group(4)
-        last_msg_id = int(match.group(5))
-        if match.group(3):  # if 'c/' is present, it's a private group/channel
-            chat_id = int("-100" + username_or_id)
-        else:
-            chat_id = username_or_id
+        chat_raw = match.group(3)
+        chat_id = int(f"-100{chat_raw}") if chat_raw.isdigit() else chat_raw
+        last_msg_id = int(match.group(4)) if match.group(4) else None
     elif target.forward_from_chat:
         chat_id = target.forward_from_chat.id
         last_msg_id = target.forward_from_message_id
     else:
-        return await message.reply("**Invalid message. Please forward a message from the target channel/group.**")
+        return await message.reply("**Invalid message.**")
 
-    confirm = await client.ask(user_id, "**Send /yes to confirm or /no to cancel.**")
+    confirm = await client.ask(user_id, "**Type /yes to start or /no to cancel.**")
     if confirm.text.lower() == "/no":
-        return await confirm.reply("**Process cancelled!**")
+        return await confirm.reply("**Process cancelled.**")
 
-    status = await confirm.reply("⏳ Connecting to userbot and scanning for duplicates...")
-
-    temp.lock[user_id] = "True"
-    data = _bot['session']
-    bot = await get_client(data)
+    sts = await confirm.reply("⏳ Connecting and scanning...")
 
     try:
+        bot = await get_client(_bot['session'])
         await bot.start()
-        test = await bot.send_message(chat_id, "Testing access...")
-        await test.delete()
     except Exception as e:
-        temp.lock[user_id] = "False"
-        return await status.edit(f"**Userbot must be admin in this chat.**\n\n`{e}`")
-
-    MESSAGES = []
-    DUPLICATES = []
-    total = deleted = 0
+        return await sts.edit(f"**Error connecting userbot:**\n{e}")
 
     try:
-        async for msg in bot.search_messages(chat_id=chat_id, filter=enums.MessagesFilter.DOCUMENT):
-            if temp.CANCEL.get(user_id):
-                temp.lock[user_id] = "False"
-                return await status.edit("**Process cancelled by user.**", reply_markup=COMPLETED_BTN)
-
-            file_id = unpack_new_file_id(msg.document.file_id)
-
-            if file_id in MESSAGES:
-                DUPLICATES.append(msg.id)
-            else:
-                MESSAGES.append(file_id)
-
-            total += 1
-
-            if len(DUPLICATES) >= 100:
-                await bot.delete_messages(chat_id, DUPLICATES)
-                deleted += len(DUPLICATES)
-                DUPLICATES.clear()
-
-            if total % 500 == 0:
-                await status.edit(f"🔎 Scanned: `{total}` messages\n🗑️ Deleted: `{deleted}` duplicates...")
-
-        if DUPLICATES:
-            await bot.delete_messages(chat_id, DUPLICATES)
-            deleted += len(DUPLICATES)
-
-    except Exception as e:
-        temp.lock[user_id] = "False"
+        await bot.send_message(chat_id, ".")
+    except:
         await bot.stop()
-        return await status.edit(f"**Error occurred:** `{e}`")
+        return await sts.edit("**Userbot has no permission in this chat. Make it admin.**")
 
-    temp.lock[user_id] = "False"
-    await bot.stop()
-    await status.edit(
-        f"✅ **Duplicate cleanup completed!**\n\n"
-        f"🔍 Total Documents Scanned: `{total}`\n"
-        f"🗑️ Duplicates Deleted: `{deleted}`\n\n"
-        f"✨ _Thanks for using Duplicate Remover_",
-        reply_markup=COMPLETED_BTN
-    )
+    seen_files = set()
+    duplicate_ids = []
+    total, deleted = 0, 0
+    temp.lock[user_id] = True
+
+    try:
+        async for msg in bot.get_chat_history(chat_id):
+            if temp.CANCEL.get(user_id):
+                await sts.edit("**Cancelled**", reply_markup=COMPLETED_BTN)
+                await bot.stop()
+                return
+
+            if msg.document:
+                total += 1
+                file_id = unpack_new_file_id(msg.document.file_id)
+                if file_id in seen_files:
+                    duplicate_ids.append(msg.id)
+                else:
+                    seen_files.add(file_id)
+
+            if len(duplicate_ids) >= 50:
+                await bot.delete_messages(chat_id, duplicate_ids)
+                deleted += len(duplicate_ids)
+                duplicate_ids = []
+                await sts.edit(f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
+                               f"║╭━━━━━━━━━━━━━━━➣\n"
+                               f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
+                               f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
+                               f"║╰━━━━━━━━━━━━━━━➣\n"
+                               f"╚════❰ ᴘʀᴏᴄᴇssɪɴɢ ❱══❍⊱❁۪۪", reply_markup=CANCEL_BTN)
+
+        if duplicate_ids:
+            await bot.delete_messages(chat_id, duplicate_ids)
+            deleted += len(duplicate_ids)
+
+        await sts.edit(f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
+                       f"║╭━━━━━━━━━━━━━━━➣\n"
+                       f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
+                       f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
+                       f"║╰━━━━━━━━━━━━━━━➣\n"
+                       f"╚════❰ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ❱══❍⊱❁۪۪", reply_markup=COMPLETED_BTN)
+    except Exception as e:
+        await sts.edit(f"**Error during scan:**\n{e}")
+    finally:
+        temp.lock[user_id] = False
+        await bot.stop()
