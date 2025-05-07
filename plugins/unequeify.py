@@ -1,10 +1,9 @@
-from pyrogram import Client, filters, enums
+from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from config import temp
 from database import db
 from .test import get_client
-import re, base64, struct
-from pyrogram.file_id import FileId
+import re
 
 COMPLETED_BTN = InlineKeyboardMarkup([
     [InlineKeyboardButton('💟 Support Group', url='https://t.me/VJ_Bot_Disscussion')],
@@ -12,23 +11,6 @@ COMPLETED_BTN = InlineKeyboardMarkup([
 ])
 
 CANCEL_BTN = InlineKeyboardMarkup([[InlineKeyboardButton('• Cancel', 'terminate_frwd')]])
-
-# File ID utilities
-def encode_file_id(s: bytes) -> str:
-    r, n = b"", 0
-    for i in s + bytes([22]) + bytes([4]):
-        if i == 0:
-            n += 1
-        else:
-            if n:
-                r += b"\x00" + bytes([n])
-                n = 0
-            r += bytes([i])
-    return base64.urlsafe_b64encode(r).decode().rstrip("=")
-
-def unpack_new_file_id(new_file_id):
-    decoded = FileId.decode(new_file_id)
-    return encode_file_id(struct.pack("<iiqq", int(decoded.file_type), decoded.dc_id, decoded.media_id, decoded.access_hash))
 
 @Client.on_message(filters.command("unequify") & filters.private)
 async def unequify(client, message: Message):
@@ -46,7 +28,6 @@ async def unequify(client, message: Message):
     if target.text and target.text.startswith("/"):
         return await message.reply("**Cancelled.**")
 
-    # Parse chat ID and message ID
     chat_id, last_msg_id = None, None
     if target.text:
         match = re.match(r"(https://)?t\.me/(c/)?([\w\d_]+)/?(\d+)?", target.text.strip())
@@ -93,33 +74,40 @@ async def unequify(client, message: Message):
 
             if msg.document:
                 total += 1
-                file_id = unpack_new_file_id(msg.document.file_id)
-                if file_id in seen_files:
+                file_uid = msg.document.file_unique_id
+                if file_uid in seen_files:
                     duplicate_ids.append(msg.id)
                 else:
-                    seen_files.add(file_id)
+                    seen_files.add(file_uid)
 
             if len(duplicate_ids) >= 50:
                 await bot.delete_messages(chat_id, duplicate_ids)
                 deleted += len(duplicate_ids)
-                duplicate_ids = []
-                await sts.edit(f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
-                               f"║╭━━━━━━━━━━━━━━━➣\n"
-                               f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
-                               f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
-                               f"║╰━━━━━━━━━━━━━━━➣\n"
-                               f"╚════❰ ᴘʀᴏᴄᴇssɪɴɢ ❱══❍⊱❁۪۪", reply_markup=CANCEL_BTN)
+                duplicate_ids.clear()
+
+                await sts.edit(
+                    f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
+                    f"║╭━━━━━━━━━━━━━━━➣\n"
+                    f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
+                    f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
+                    f"║╰━━━━━━━━━━━━━━━➣\n"
+                    f"╚════❰ ᴘʀᴏᴄᴇssɪɴɢ ❱══❍⊱❁۪۪",
+                    reply_markup=CANCEL_BTN
+                )
 
         if duplicate_ids:
             await bot.delete_messages(chat_id, duplicate_ids)
             deleted += len(duplicate_ids)
 
-        await sts.edit(f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
-                       f"║╭━━━━━━━━━━━━━━━➣\n"
-                       f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
-                       f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
-                       f"║╰━━━━━━━━━━━━━━━➣\n"
-                       f"╚════❰ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ❱══❍⊱❁۪۪", reply_markup=COMPLETED_BTN)
+        await sts.edit(
+            f"╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪\n"
+            f"║╭━━━━━━━━━━━━━━━➣\n"
+            f"║┣⪼ ғᴇᴛᴄʜᴇᴅ ғɪʟᴇs: {total}\n"
+            f"║┣⪼ ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴅᴇʟᴇᴛᴇᴅ: {deleted}\n"
+            f"║╰━━━━━━━━━━━━━━━➣\n"
+            f"╚════❰ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ❱══❍⊱❁۪۪",
+            reply_markup=COMPLETED_BTN
+        )
     except Exception as e:
         await sts.edit(f"**Error during scan:**\n{e}")
     finally:
