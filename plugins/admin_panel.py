@@ -30,7 +30,7 @@ async def generate_status_graph():
     plt.savefig("status_graph.png")
     plt.close()
 
-@Client.on_message(filters.command("status") & filters.user(Config.OWNER_ID))
+@Client.on_message(filters.command("status") & filters.user(Config.BOT_OWNER))
 async def bot_status(client, message):
     try:
         await generate_status_graph()
