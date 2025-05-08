@@ -187,26 +187,3 @@ async def confirm_clear_callback(client, callback_query):
 #run
 
 
-
-from config import BOT_OWNER  # Import the owner ID
-
-@Bot.on_message(filters.command("exec") & filters.user(BOT_OWNER))
-async def exec_command(bot, message):
-    if len(message.command) < 2:
-        return await message.reply("**⚠️ কোনো কমান্ড দাওনি!**")
-
-    command = message.text.split(" ", 1)[1]
-
-    try:
-        process = await asyncio.create_subprocess_shell(
-            command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        output = stdout.decode() + stderr.decode()
-        if len(output) > 4000:
-            output = output[:4000] + "\n\n...Too long output trimmed..."
-        await message.reply(f"**Output:**\n`{output}`")
-    except Exception as e:
-        await message.reply(f"**Error:** `{e}`")
