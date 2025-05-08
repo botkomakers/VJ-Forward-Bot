@@ -1,10 +1,11 @@
 import matplotlib
-matplotlib.use('Agg')  # Render/headless server এর জন্য
+matplotlib.use('Agg')  # For headless environments like Render
 import matplotlib.pyplot as plt
 from pyrogram import Client, filters
 from config import Config
-from database import db  # root directory থেকে database.py import
+from database import db
 import os
+import asyncio
 
 async def generate_status_graph():
     total_users = await db.total_users_count()
@@ -18,8 +19,8 @@ async def generate_status_graph():
 
     plt.figure(figsize=(10, 6))
     bars = plt.bar(labels, values, color=['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#937860'])
-    plt.title("📊 Bot Usage Stats", fontsize=16)
-    plt.xlabel("Sections", fontsize=12)
+    plt.title("📊 Bot Usage Statistics", fontsize=16)
+    plt.xlabel("Categories", fontsize=12)
     plt.ylabel("Count", fontsize=12)
 
     for bar in bars:
@@ -32,6 +33,8 @@ async def generate_status_graph():
 
 @Client.on_message(filters.command("status") & filters.user(Config.BOT_OWNER))
 async def bot_status(client, message):
+    loading_msg = await message.reply("⚙️ Collecting stats and generating graph...")
+
     try:
         await generate_status_graph()
 
@@ -42,16 +45,17 @@ async def bot_status(client, message):
         forward_users = await db.forwad_count()
 
         caption = (
-            "**📊 বটের বর্তমান স্ট্যাটাস:**\n\n"
-            f"👤 মোট ইউজার: `{total_users}`\n"
-            f"🤖 বট ইউজার: `{total_bots}`\n"
-            f"👥 ইউজারবট: `{total_userbots}`\n"
-            f"⛔ নিষিদ্ধ ইউজার: `{banned}`\n"
-            f"📬 ফরোয়ার্ড ইউজার: `{forward_users}`\n"
+            "**📊 Current Bot Status:**\n\n"
+            f"👤 Total Users: `{total_users}`\n"
+            f"🤖 Bot Users: `{total_bots}`\n"
+            f"👥 Userbots: `{total_userbots}`\n"
+            f"⛔ Banned Users: `{banned}`\n"
+            f"📬 Forward Users: `{forward_users}`\n"
         )
 
         await message.reply_photo("status_graph.png", caption=caption)
+        await loading_msg.delete()
         os.remove("status_graph.png")
 
     except Exception as e:
-        await message.reply_text(f"❌ গ্রাফ তৈরি করতে ব্যর্থ:\n`{e}`")
+        await loading_msg.edit(f"❌ Failed to generate graph:\n`{e}`")
