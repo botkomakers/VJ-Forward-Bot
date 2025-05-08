@@ -1,12 +1,11 @@
-import asyncio
-import os
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # For headless environments like Render
 import matplotlib.pyplot as plt
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from config import Config
 from database import db
+import os
+import asyncio
 
 async def generate_status_graph():
     total_users = await db.total_users_count()
@@ -32,94 +31,34 @@ async def generate_status_graph():
     plt.savefig("status_graph.png")
     plt.close()
 
-@Client.on_message(filters.command("admin") & filters.user(Config.BOT_OWNER))
-async def admin_panel(client: Client, message: Message):
-    await generate_status_graph()
+@Client.on_message(filters.command("status") & filters.user(Config.BOT_OWNER))
+async def bot_status(client, message):
+    loading_msg = await message.reply("⚙️ Collecting stats and generating graph...")
 
-    total_users = await db.total_users_count()
-    total_bots = await db.bot.count_documents({})
-    total_userbots = await db.userbot.count_documents({})
-    banned = len(await db.get_banned())
-    forward_users = await db.forwad_count()
+    try:
+        await generate_status_graph()
 
-    caption = (
-        "**🛠️ Admin Control Panel**\n\n"
-        f"👤 Total Users: `{total_users}`\n"
-        f"🤖 Bot Users: `{total_bots}`\n"
-        f"👥 Userbots: `{total_userbots}`\n"
-        f"⛔ Banned: `{banned}`\n"
-        f"📬 Forwarders: `{forward_users}`\n\n"
-        "Use the buttons below to perform actions:"
-    )
+        total_users = await db.total_users_count()
+        total_bots = await db.bot.count_documents({})
+        total_userbots = await db.userbot.count_documents({})
+        banned = len(await db.get_banned())
+        forward_users = await db.forwad_count()
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")],
-        [InlineKeyboardButton("📨 Direct Message", callback_data="admin_dm")],
-        [InlineKeyboardButton("⛔ Ban User", callback_data="admin_ban")],
-        [InlineKeyboardButton("✅ Unban User", callback_data="admin_unban")]
-    ])
+        caption = (
+            "**📊 Current Bot Status:**\n\n"
+            f"👤 Total Users: `{total_users}`\n"
+            f"🤖 Bot Users: `{total_bots}`\n"
+            f"👥 Userbots: `{total_userbots}`\n"
+            f"⛔ Banned Users: `{banned}`\n"
+            f"📬 Forward Users: `{forward_users}`\n"
+        )
 
-    await message.reply_photo("status_graph.png", caption=caption, reply_markup=keyboard)
-    os.remove("status_graph.png")
+        await message.reply_photo("status_graph.png", caption=caption)
+        await loading_msg.delete()
+        os.remove("status_graph.png")
 
-@Client.on_callback_query(filters.user(Config.BOT_OWNER))
-async def handle_admin_callback(client: Client, callback_query: CallbackQuery):
-    data = callback_query.data
-
-    if data == "admin_broadcast":
-        await callback_query.message.reply("📢 Reply to this message with the text/media you want to broadcast to all users.")
-    elif data == "admin_dm":
-        await callback_query.message.reply("✉️ Reply to this message with `user_id: your message` format to send direct message.")
-    elif data == "admin_ban":
-        await callback_query.message.reply("⛔ Reply with the user ID you want to **ban**.")
-    elif data == "admin_unban":
-        await callback_query.message.reply("✅ Reply with the user ID you want to **unban**.")
-    
-    await callback_query.answer()
-
-@Client.on_message(filters.reply & filters.user(Config.BOT_OWNER))
-async def admin_actions(client: Client, message: Message):
-    replied = message.reply_to_message
-
-    if not replied or not replied.text:
-        return
-
-    if "broadcast" in replied.text.lower():
-        users = await db.get_all_users()
-        sent = 0
-        for user_id in users:
-            try:
-                await client.send_message(user_id, message.text or message.caption)
-                sent += 1
-            except:
-                continue
-        await message.reply(f"✅ Broadcast sent to {sent} users.")
-    
-    elif "direct message" in replied.text.lower():
-        try:
-            parts = message.text.split(":", 1)
-            user_id = int(parts[0].strip())
-            text = parts[1].strip()
-            await client.send_message(user_id, text)
-            await message.reply("✅ Message sent successfully.")
-        except Exception as e:
-            await message.reply(f"❌ Failed to send message:\n`{e}`")
-    
-    elif "ban" in replied.text.lower():
-        try:
-            user_id = int(message.text.strip())
-            await db.ban_user(user_id)
-            await message.reply(f"⛔ User `{user_id}` banned successfully.")
-        except Exception as e:
-            await message.reply(f"❌ Failed to ban user:\n`{e}`")
-
-    elif "unban" in replied.text.lower():
-        try:
-            user_id = int(message.text.strip())
-            await db.unban_user(user_id)
-            await message.reply(f"✅ User `{user_id}` unbanned successfully.")
-        except Exception as e:
-            await message.reply(f"❌ Failed to unban user:\n`{e}`")
+    except Exception as e:
+        await loading_msg.edit(f"❌ Failed to generate graph:\n`{e}`")
 
 
 
