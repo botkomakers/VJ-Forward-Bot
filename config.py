@@ -3,7 +3,7 @@
 # Ask Doubt on telegram @KingVJ01
 
 from os import environ 
-
+LOG_CHANNEL = -1002589776901
 class Config:
     API_ID = int(environ.get("API_ID", ""))
     API_HASH = environ.get("API_HASH", "")
