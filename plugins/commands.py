@@ -14,19 +14,15 @@ from script import Script
 
 START_TIME = time.time()
 
-main_buttons = [[
-    InlineKeyboardButton('❣️ ᴅᴇᴠᴇʟᴏᴘᴇʀ ❣️', url='https://t.me/your_bot_link')
-],[
-    InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion'),
-    InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/your_bot_link')
-],[
-    InlineKeyboardButton('💝 Yᴏᴜᴛᴜʙᴇ', url='https://youtube.com/@your_bot_link')
-],[
-    InlineKeyboardButton('👨‍💻 ʜᴇʟᴘ', callback_data='help'),
-    InlineKeyboardButton('💁 ᴀʙᴏᴜᴛ', callback_data='about')
-],[
-    InlineKeyboardButton('⚙ sᴇᴛᴛɪɴɢs', callback_data='settings#main')
-]]
+main_buttons = [
+    [InlineKeyboardButton('❤️ ᴏᴇᴡᴇʟᴏᴛᴇʀ ❤️', url='https://t.me/your_bot_link')],
+    [InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion'),
+     InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/your_bot_link')],
+    [InlineKeyboardButton('💕 Yᴏᴜᴛᴜʙᴇ', url='https://youtube.com/@your_bot_link')],
+    [InlineKeyboardButton('👨‍💻 ʜᴇʟᴘ', callback_data='help'),
+     InlineKeyboardButton('💁 ᴀʙᴏᴜᴛ', callback_data='about')],
+    [InlineKeyboardButton('⚙ sᴇᴛᴛɪɴɢs', callback_data='settings#main')]
+]
 
 @Client.on_message(filters.private & filters.command(['start']))
 async def start(client, message):
@@ -36,21 +32,34 @@ async def start(client, message):
     mention = user.mention
     username = f"@{user.username}" if user.username else "N/A"
 
+    # Check and add new user
     if not await db.is_user_exist(user_id):
         await db.add_user(user_id, first_name)
         log_text = f"""
-╭━━━━━━━[ 🚀 ɴᴇᴡ ᴜsᴇʀ ᴀʟᴇʀᴛ ]━━━━━━━➣
-┣⪼ 🆔 ID: <code>{user_id}</code>
+╭━━━[ 🚀 ɴᴇᴡ ᴜsᴇʀ ᴀʟᴇʀᴛ ]━━━➤
+┣⪼ 🔹 ID: `{user_id}`
 ┣⪼ 👤 Name: {mention}
 ┣⪼ 🌐 Username: {username}
-┣⪼ ⏰ Join Time: <code>{time.strftime('%Y-%m-%d %H:%M:%S')}</code>
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━➣
+┣⪼ ⏰ Join Time: `{time.strftime('%Y-%m-%d %H:%M:%S')}`
+╰━━━━━━━━━━━━━━━━━━━━━━➤
 """
         try:
-            await client.send_message(Config.LOG_CHANNEL, log_text)
+            await client.send_message(
+                chat_id=int(Config.LOG_CHANNEL),
+                text=log_text,
+                parse_mode="html"
+            )
         except Exception as e:
-            print(f"Logging error: {e}")
+            try:
+                await client.send_message(
+                    chat_id=int(Config.BOT_OWNER),
+                    text=f"❌ Logging error: `{e}`",
+                    parse_mode="html"
+                )
+            except:
+                print(f"Logging error & notify failed: {e}")
 
+    # Show Start Message
     reply_markup = InlineKeyboardMarkup(main_buttons)
     await client.send_photo(
         chat_id=message.chat.id,
