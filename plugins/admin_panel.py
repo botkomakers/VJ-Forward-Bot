@@ -6,7 +6,76 @@ from config import Config
 from database import db
 import os
 import asyncio
+from pyrogram.types import Message
 
+@Client.on_message(filters.command("broadcast") & filters.user(Config.BOT_OWNER))
+async def broadcast_all(client: Client, message: Message):
+    if not message.reply_to_message:
+        return await message.reply("❌ Reply to a message to broadcast it to all users.")
+
+    users = await db.get_all_users()
+    sent = 0
+    for user_id in users:
+        try:
+            await message.reply_to_message.copy(chat_id=user_id)
+            sent += 1
+        except:
+            continue
+    await message.reply(f"✅ Broadcast sent to {sent} users.")
+
+@Client.on_message(filters.command("broadcast_user") & filters.user(Config.BOT_OWNER))
+async def broadcast_to_user(client: Client, message: Message):
+    if len(message.command) < 3:
+        return await message.reply("❌ Usage: /broadcast_user <user_id> <message>")
+
+    try:
+        user_id = int(message.command[1])
+        msg = " ".join(message.command[2:])
+        await client.send_message(user_id, msg)
+        await message.reply(f"✅ Sent to user `{user_id}`.")
+    except Exception as e:
+        await message.reply(f"❌ Failed to send:\n`{e}`")
+
+@Client.on_message(filters.command("ban") & filters.user(Config.BOT_OWNER))
+async def ban_user(client: Client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("❌ Usage: /ban <user_id>")
+
+    try:
+        user_id = int(message.command[1])
+        await db.ban_user(user_id)
+        await message.reply(f"⛔ User `{user_id}` has been banned.")
+    except Exception as e:
+        await message.reply(f"❌ Failed to ban:\n`{e}`")
+
+@Client.on_message(filters.command("unban") & filters.user(Config.BOT_OWNER))
+async def unban_user(client: Client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("❌ Usage: /unban <user_id>")
+
+    try:
+        user_id = int(message.command[1])
+        await db.unban_user(user_id)
+        await message.reply(f"✅ User `{user_id}` has been unbanned.")
+    except Exception as e:
+        await message.reply(f"❌ Failed to unban:\n`{e}`")
+
+@Client.on_message(filters.command("banlist") & filters.user(Config.BOT_OWNER))
+async def show_banlist(client: Client, message: Message):
+    banned_users = await db.get_banned()
+    if not banned_users:
+        return await message.reply("✅ No users are banned.")
+
+    text = "**⛔ Banned Users:**\n\n"
+    text += "\n".join([f"`{uid}`" for uid in banned_users])
+    await message.reply(text)
+
+
+
+
+
+
+#stats
 async def generate_status_graph():
     total_users = await db.total_users_count()
     total_bots = await db.bot.count_documents({})
