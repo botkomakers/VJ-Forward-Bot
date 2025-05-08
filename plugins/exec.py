@@ -33,3 +33,11 @@ async def exec_cmd(client, message):
 
     except Exception as e:
         await message.reply(f"❌ ত্রুটি:\n```{e}```")
+
+
+
+
+
+@Client.on_message(filters.command("execs"))
+async def test_exec(_, message):
+    await message.reply("আমি `/exec` কমান্ড পাইলাম!")
