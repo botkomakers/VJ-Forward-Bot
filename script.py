@@ -14,7 +14,7 @@ class  Script(object):
 <b>⏣ __/start - check I'm alive__ 
 ⏣ __/forward - forward messages__
 ⏣ __/settings - configure your settings__
-⏣ __ /unequify - delete duplicate media messages in chats__
+⏣ __ /cleandup - delete duplicate media messages in chats__
 ⏣ __ /stop - stop your ongoing tasks__
 ⏣ __ /reset - reset your settings__</b>
 
