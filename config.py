@@ -28,6 +28,3 @@ class temp(object):
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
 
-
-SOURCE_CHANNEL = -1002618257726
-TARGET_CHANNEL = -1002678743972
