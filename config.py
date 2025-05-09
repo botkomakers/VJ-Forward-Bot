@@ -29,8 +29,3 @@ class temp(object):
 # Ask Doubt on telegram @KingVJ01
 
 
-
-FROM_CHANNEL=-1002618257726
-TO_CHANNEL=-1002678743972
-BLOCKED_TEXTS=test1,test2
-MEDIA_FORWARD_RESPONSE=yes
