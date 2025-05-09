@@ -70,6 +70,19 @@ if __name__ == "__main__":
 
     asyncio.get_event_loop().run_until_complete(main())
 
+
+from plugins.forwarder import start_userbot  # Import userbot starter
+
+async def main():
+    await VJBot.start()
+    await start_userbot()  # Start userbot
+    print("Bot and Userbot are running")
+    await idle()  # keep running
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
