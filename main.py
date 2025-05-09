@@ -149,7 +149,7 @@ class Bot(Client):
 
         print(f"{me.first_name} Is Started.....✨️")
 
-        for id in Config.ADMIN:
+        for id in Config.BOT_OWNER:
             try:
                 await self.send_message(id, f"**{me.first_name} Is Started...**")
             except Exception as e:
