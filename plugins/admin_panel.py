@@ -192,58 +192,44 @@ async def confirm_clear_callback(client, callback_query):
 
 
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from database import db
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from VJForwardBot.database import db  # তুমি যেভাবে ডাটাবেস ইমপোর্ট করো সেটা ব্যবহার করো
 
-bot = Client("channel_selector_bot")
-
-user_channels_cache = {}
-
-@bot.on_message(filters.command("setforward"))
-async def select_from_channel(client, message: Message):
+@Client.on_message(filters.command("setforward") & filters.private)
+async def set_forward_handler(client, message):
     user_id = message.from_user.id
-    channels = await db.get_user_channels(user_id)
 
-    if not channels:
-        return await message.reply("❌ আপনি কোনো চ্যানেল যোগ করেননি।")
+    # ডাটাবেস থেকে ইউজারের চ্যানেল লিস্ট আনো
+    channels = await db.get_user_channels(user_id)  # এই ফাংশন তোমার ডাটাবেসে থাকতে হবে
 
-    buttons = [
-        [InlineKeyboardButton(text=ch['title'], callback_data=f"fromch_{ch['chat_id']}")]
-        for ch in channels
-    ]
-    user_channels_cache[user_id] = {"channels": channels}
-    await message.reply("🔰 কোন চ্যানেল থেকে ফরওয়ার্ড হবে?", reply_markup=InlineKeyboardMarkup(buttons))
+    if not channels or len(channels) < 2:
+        return await message.reply("⚠️ অন্তত দুটি চ্যানেল যুক্ত করতে হবে।")
 
+    keyboard = []
+    for from_chan in channels:
+        row = []
+        for to_chan in channels:
+            if from_chan["id"] != to_chan["id"]:
+                row.append(InlineKeyboardButton(
+                    text=f"{from_chan['title']} ➜ {to_chan['title']}",
+                    callback_data=f"setfwd|{from_chan['id']}|{to_chan['id']}"
+                ))
+        if row:
+            keyboard.append(row)
 
-@bot.on_callback_query(filters.regex(r"^fromch_"))
-async def select_to_channel(client: Client, query: CallbackQuery):
-    user_id = query.from_user.id
-    from_chat_id = int(query.data.split("_")[1])
+    await message.reply(
+        "🔁 কোন চ্যানেল থেকে কোন চ্যানেলে পোস্ট ফরওয়ার্ড হবে সেট করুন:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
-    user_channels_cache[user_id]['from'] = from_chat_id
-    channels = user_channels_cache[user_id]['channels']
-    buttons = [
-        [InlineKeyboardButton(text=ch['title'], callback_data=f"toch_{ch['chat_id']}")]
-        for ch in channels if ch['chat_id'] != from_chat_id
-    ]
+# কলব্যাক হ্যান্ডলার (এইটাও দরকার)
+@Client.on_callback_query(filters.regex(r"^setfwd\|"))
+async def callback_set_forward(client, callback_query):
+    _, from_id, to_id = callback_query.data.split("|")
+    
+    # এখানে সেভ করো ইউজারের জন্য
+    user_id = callback_query.from_user.id
+    await db.set_user_forward_channels(user_id, int(from_id), int(to_id))  # এই ফাংশন তোমার ডাটাবেসে থাকতে হবে
 
-    await query.message.edit("🎯 কোন চ্যানেলে ফরওয়ার্ড হবে?", reply_markup=InlineKeyboardMarkup(buttons))
-
-
-@bot.on_callback_query(filters.regex(r"^toch_"))
-async def finalize_forward(client: Client, query: CallbackQuery):
-    user_id = query.from_user.id
-    to_chat_id = int(query.data.split("_")[1])
-    from_chat_id = user_channels_cache[user_id].get('from')
-
-    if not from_chat_id:
-        return await query.answer("❌ Source চ্যানেল পাওয়া যায়নি", show_alert=True)
-
-    # Save forward data in DB
-    await db.add_frwd(user_id)
-    await db.update_forward(user_id, {
-        'chat_id': from_chat_id,
-        'toid': to_chat_id
-    })
-
-    await query.message.edit(f"✅ অটো ফরওয়ার্ড সেটআপ সম্পন্ন!\n\n**From:** `{from_chat_id}`\n**To:** `{to_chat_id}`")
+    await callback_query.answer("সেট করা হয়েছে!")
+    await callback_query.message.edit("✅ সফলভাবে ফরওয়ার্ড চ্যানেল সেট করা হয়েছে।")
