@@ -17,12 +17,12 @@ START_TIME = time.time()
 # Ask Doubt on telegram @KingVJ01
 
 main_buttons = [[
-    InlineKeyboardButton('❣️ ᴅᴇᴠᴇʟᴏᴘᴇʀ ❣️', url='https://t.me/kingvj01')
+    InlineKeyboardButton('❣️ ᴅᴇᴠᴇʟᴏᴘᴇʀ ❣️', url='https://t.me/movie_channel8')
 ],[
     InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion'),
-    InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/vj_botz')
+    InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/movie_channel8')
 ],[
-    InlineKeyboardButton('💝 sᴜʙsᴄʀɪʙᴇ ᴍʏ ʏᴏᴜᴛᴜʙᴇ ᴄʜᴀɴɴᴇʟ', url='https://youtube.com/@Tech_VJ')
+    InlineKeyboardButton('💝 sᴜʙsᴄʀɪʙᴇ ᴍʏ ʏᴏᴜᴛᴜʙᴇ ᴄʜᴀɴɴᴇʟ', url='https://youtube.com/@movie_channel8')
 ],[
     InlineKeyboardButton('👨‍💻 ʜᴇʟᴘ', callback_data='help'),
     InlineKeyboardButton('💁 ᴀʙᴏᴜᴛ', callback_data='about')
@@ -31,7 +31,7 @@ main_buttons = [[
 ]]
 
 # Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@movie_channel8
 # Ask Doubt on telegram @KingVJ01
 
 @Client.on_message(filters.private & filters.command(['start']))
