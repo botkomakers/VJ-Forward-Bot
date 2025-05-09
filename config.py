@@ -28,8 +28,7 @@ class temp(object):
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
 
-    ADMIN = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get('ADMIN', '7862181538').split()]
-
+    
 
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1002589776901"))
 
