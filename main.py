@@ -71,7 +71,7 @@ if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
 
 
-from plugins.forwarder import start_userbot  # Import userbot starter
+from plugins.admin_panel import start_userbot  # Import userbot starter
 
 async def main():
     await VJBot.start()
