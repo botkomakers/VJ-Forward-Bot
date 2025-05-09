@@ -196,59 +196,42 @@ from database import db
 async def set_forward(client: Client, message: Message):
     try:
         args = message.text.split()
-        print("Received setforward command:", args)
-
         if len(args) != 3:
             return await message.reply_text(
-                "**❗ব্যবহার:** `/setforward <from_chat_id> <to_chat_id>`",
-                quote=True
-            )
+                "❗**ব্যবহার:** `/setforward <from_chat_id> <to_chat_id>`", quote=True)
 
-        try:
-            from_chat = int(args[1])
-            to_chat = int(args[2])
-        except ValueError:
-            return await message.reply_text(
-                "**⚠️ ত্রুটি:** চ্যাট আইডি গুলো সংখ্যায় দিতে হবে!",
-                quote=True
-            )
-
+        from_chat = int(args[1])
+        to_chat = int(args[2])
         user_id = message.from_user.id
 
-        # Add user if not exists
         if not await db.is_forwad_exit(user_id):
             await db.add_frwd(user_id)
 
-        await db.update_forward(user_id, {
-            "chat_id": from_chat,
-            "toid": to_chat
-        })
+        details = await db.get_forward_details(user_id)
+        details.update({"chat_id": from_chat, "toid": to_chat})
+        await db.update_forward(user_id, details)
 
-        return await message.reply_text(
-            f"**✅ ফরোয়ার্ডিং সফলভাবে সেট করা হয়েছে!**\n\n**From Chat ID:** `{from_chat}`\n**To Chat ID:** `{to_chat}`",
-            quote=True
-        )
+        await message.reply_text(
+            f"✅ **ফরোয়ার্ডিং সফলভাবে সেট হয়েছে!**\n\n**From:** `{from_chat}`\n**To:** `{to_chat}`", quote=True)
 
     except Exception as e:
-        print("Error in setforward:", e)
-        await message.reply_text(f"**⚠️ ত্রুটি:** `{str(e)}`", quote=True)
+        await message.reply_text(f"⚠️ **ত্রুটি:** `{str(e)}`", quote=True)
 
-# ✅ অটো ফরোয়ার্ড লিসেনার (চ্যানেল পোস্ট হলে ফরোয়ার্ড করে)
+
+
 @Client.on_message(filters.channel)
 async def auto_forward_handler(client, message):
     try:
-        all_forwarders = await db.get_all_frwd()  # Assuming this returns a list
-        for user in all_forwarders:
+        async for user in db.get_all_frwd():
             user_id = user['user_id']
             details = await db.get_forward_details(user_id)
             from_id = details.get("chat_id")
             to_id = details.get("toid")
 
-            if message.chat.id == from_id:
+            if from_id and to_id and message.chat.id == from_id:
                 try:
                     await message.forward(to_id)
                 except Exception as e:
-                    print(f"❌ Forward Failed for user {user_id}: {e}")
-
+                    print(f"❌ ফরওয়ার্ড ব্যর্থ {user_id} এর জন্য: {e}")
     except Exception as e:
-        print(f"⚠️ Auto Forward Error: {e}")
+        print(f"⚠️ অটো ফরোয়ার্ড ত্রুটি: {e}")
