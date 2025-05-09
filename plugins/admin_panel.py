@@ -188,63 +188,50 @@ async def confirm_clear_callback(client, callback_query):
 
 # bot/plugins/exec.p
 
-
-
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from database import db
 
-# ✅ Set Forward Command
 @Client.on_message(filters.command("setforward") & filters.private)
 async def set_forward(client: Client, message: Message):
     try:
         args = message.text.split()
+        print("Received setforward command:", args)
+
         if len(args) != 3:
             return await message.reply_text(
-                "❗ব্যবহার:\n<code>/setforward &lt;from_chat_id&gt; &lt;to_chat_id&gt;</code>",
-                parse_mode="HTML",
+                "**❗ব্যবহার:** `/setforward <from_chat_id> <to_chat_id>`",
                 quote=True
             )
 
-        from_chat = int(args[1])
-        to_chat = int(args[2])
+        try:
+            from_chat = int(args[1])
+            to_chat = int(args[2])
+        except ValueError:
+            return await message.reply_text(
+                "**⚠️ ত্রুটি:** চ্যাট আইডি গুলো সংখ্যায় দিতে হবে!",
+                quote=True
+            )
+
         user_id = message.from_user.id
 
-        # Add user to forward list if not exists
+        # Add user if not exists
         if not await db.is_forwad_exit(user_id):
             await db.add_frwd(user_id)
 
-        # Update forward details
         await db.update_forward(user_id, {
             "chat_id": from_chat,
             "toid": to_chat
         })
 
-        await message.reply_text(
-            f"✅ <b>ফরোয়ার্ডিং সেট করা হয়েছে সফলভাবে!</b>\n\n<b>From:</b> <code>{from_chat}</code>\n<b>To:</b> <code>{to_chat}</code>",
-            parse_mode="HTML",
+        return await message.reply_text(
+            f"**✅ ফরোয়ার্ডিং সফলভাবে সেট করা হয়েছে!**\n\n**From Chat ID:** `{from_chat}`\n**To Chat ID:** `{to_chat}`",
             quote=True
         )
 
     except Exception as e:
-        await message.reply_text(f"⚠️ <b>ত্রুটি:</b> <code>{str(e)}</code>", parse_mode="HTML", quote=True)
-
-
-# ✅ Stop Forward Command
-@Client.on_message(filters.command("stopforward") & filters.private)
-async def stop_forward(client: Client, message: Message):
-    try:
-        user_id = message.from_user.id
-
-        if not await db.is_forwad_exit(user_id):
-            return await message.reply_text("⚠️ <b>তুমি কোন ফরোয়ার্ডিং চালু করোনি!</b>", parse_mode="HTML", quote=True)
-
-        await db.rmve_frwd(user_id)
-        await message.reply_text("🛑 <b>ফরোয়ার্ডিং বন্ধ করে দেওয়া হয়েছে!</b>", parse_mode="HTML", quote=True)
-
-    except Exception as e:
-        await message.reply_text(f"⚠️ <b>ত্রুটি:</b> <code>{str(e)}</code>", parse_mode="HTML", quote=True)
-
+        print("Error in setforward:", e)
+        await message.reply_text(f"**⚠️ ত্রুটি:** `{str(e)}`", quote=True)
 
 # ✅ অটো ফরোয়ার্ড লিসেনার (চ্যানেল পোস্ট হলে ফরোয়ার্ড করে)
 @Client.on_message(filters.channel)
