@@ -190,4 +190,89 @@ async def confirm_clear_callback(client, callback_query):
 
 
 
+from pyrogram import Client, filters
+from pyrogram.types import Message
+from database import db
 
+# ✅ Set Forward Command
+@Client.on_message(filters.command("setforward") & filters.private)
+async def set_forward(client: Client, message: Message):
+    try:
+        args = message.text.split()
+        if len(args) != 3:
+            return await message.reply(
+                "**❗ব্যবহার:** `/setforward <from_chat_id> <to_chat_id>`",
+                quote=True
+            )
+
+        from_chat = int(args[1])
+        to_chat = int(args[2])
+        user_id = message.from_user.id
+
+        # Add user to forward list if not exists
+        if not await db.is_forwad_exit(user_id):
+            await db.add_frwd(user_id)
+
+        # Update forward details
+        await db.update_forward(user_id, {
+            "chat_id": from_chat,
+            "toid": to_chat
+        })
+
+        await message.reply(
+            f"**✅ ফরোয়ার্ডিং সেট করা হয়েছে সফলভাবে!**\n\n**From:** `{from_chat}`\n**To:** `{to_chat}`",
+            quote=True
+        )
+
+    except Exception as e:
+        await message.reply(f"**⚠️ ত্রুটি:** `{str(e)}`", quote=True)
+
+
+# ✅ Stop Forward Command
+@Client.on_message(filters.command("stopforward") & filters.private)
+async def stop_forward(client: Client, message: Message):
+    try:
+        user_id = message.from_user.id
+
+        if not await db.is_forwad_exit(user_id):
+            return await message.reply("**⚠️ তুমি কোন ফরোয়ার্ডিং চালু করোনি!**", quote=True)
+
+        await db.rmve_frwd(user_id)
+        await message.reply("**🛑 ফরোয়ার্ডিং বন্ধ করে দেওয়া হয়েছে!**", quote=True)
+
+    except Exception as e:
+        await message.reply(f"**⚠️ ত্রুটি:** `{str(e)}`", quote=True)
+
+
+
+
+
+
+
+
+
+
+
+from pyrogram import Client, filters
+from database import db
+
+# ✅ অটো ফরোয়ার্ড লিসেনার (চ্যানেল পোস্ট হলে ফরোয়ার্ড করে)
+@Client.on_message(filters.channel)
+async def auto_forward_handler(client, message):
+    try:
+        all_forwarders = db.get_all_frwd()
+        async for user in all_forwarders:
+            user_id = user['user_id']
+            details = await db.get_forward_details(user_id)
+            from_id = details.get("chat_id")
+            to_id = details.get("toid")
+
+            # যদি মেসেজ সঠিক চ্যানেল থেকে আসে, তবে ফরোয়ার্ড করো
+            if message.chat.id == from_id:
+                try:
+                    await message.forward(to_id)
+                except Exception as e:
+                    print(f"❌ Forward Failed for user {user_id}: {e}")
+
+    except Exception as e:
+        print(f"⚠️ Auto Forward Error: {e}")
