@@ -2,12 +2,13 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import Config
 from database import db
+import asyncio
 
 user = Client(
     name="userbot_forwarder",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
-    session_string=Config.BOT_SESSION  # session string এখানে ব্যবহার করো
+    session_string=Config.BOT_SESSION
 )
 
 @user.on_message(filters.all)
@@ -29,4 +30,7 @@ async def auto_forward(client: Client, message: Message):
             except Exception as e:
                 print(f"[{user_id}] Failed to forward: {e}")
 
-user.run()
+# এই ফাংশনটি main.py থেকে call করো
+async def start_userbot():
+    await user.start()
+    print("Userbot Started")
