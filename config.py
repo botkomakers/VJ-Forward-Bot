@@ -29,3 +29,5 @@ class temp(object):
 # Ask Doubt on telegram @KingVJ01
 
 
+SOURCE_CHANNEL = -1002618257726
+TARGET_CHANNEL = -1002678743972
