@@ -11,7 +11,7 @@ from plugins.regix import restart_forwards
 
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
+#Ask Doubt on telegram @KingVJ01
 
 if __name__ == "__main__":
     VJBot = VJ(
@@ -75,3 +75,49 @@ if __name__ == "__main__":
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
 # Ask Doubt on telegram @KingVJ01
+
+
+
+
+
+
+
+
+
+
+import asyncio
+import pytz
+from datetime import datetime
+from config import LOG_CHANNEL, BOT_TOKEN, API_ID, API_HASH
+
+async def send_restart_log(app):
+    tz = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(tz)
+    date_str = now.strftime("%d %B, %Y")
+    time_str = now.strftime("%I:%M:%S %p")
+
+    version = "v2.0.106"
+    layer = "158"
+
+    text = f"""**✅ Video Renamer Bot Is Restarted !!**
+
+📅 **Date :** {date_str}
+⏰ **Time :** {time_str}
+🌐 **Timezone :** Asia/Kolkata
+
+🉐 **Version :** `{version}` (Layer {layer})
+"""
+    try:
+        await app.send_message(LOG_CHANNEL, text)
+        print("✅ Restart log sent to log channel.")
+    except Exception as e:
+        print(f"❌ Failed to send restart log: {e}")
+
+
+
+
+if __name__ == "__main__":
+    app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+    app.start()
+    asyncio.get_event_loop().run_until_complete(send_restart_log(app))
+    app.run()
