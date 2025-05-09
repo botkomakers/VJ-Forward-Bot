@@ -4,7 +4,7 @@
 
 from os import environ 
 LOG_CHANNEL = -1002589776901
-BOT_UPTIME = ১:২
+BOT_UPTIME = 1:2
 class Config:
     API_ID = int(environ.get("API_ID", ""))
     API_HASH = environ.get("API_HASH", "")
