@@ -37,13 +37,33 @@ main_buttons = [[
 @Client.on_message(filters.private & filters.command(['start']))
 async def start(client, message):
     user = message.from_user
+    is_new = False
+
+    # নতুন ইউজার হলে ডাটাবেজে এড করো
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
+        is_new = True  # মার্ক করে রাখো নতুন
+
     reply_markup = InlineKeyboardMarkup(main_buttons)
     await client.send_message(
         chat_id=message.chat.id,
         reply_markup=reply_markup,
-        text=Script.START_TXT.format(message.from_user.first_name))
+        text=Script.START_TXT.format(user.first_name)
+    )
+
+    # নতুন ইউজার হলে লগ চ্যানেলে মেসেজ পাঠাও
+    if is_new:
+        log_text = f"""**➕ নতুন ইউজার শুরু করেছে!**
+
+👤 নাম: {user.first_name}
+🆔 ইউজার আইডি: `{user.id}`
+🌐 ইউজারনেম: @{user.username if user.username else "N/A"}
+🔗 প্রোফাইল: tg://user?id={user.id}
+"""
+        try:
+            await client.send_message(LOG_CHANNEL, log_text)
+        except Exception as e:
+            print(f"❌ লগ চ্যানেলে পাঠানো গেল না: {e}")
 
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
