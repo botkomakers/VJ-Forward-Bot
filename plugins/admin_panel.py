@@ -193,7 +193,7 @@ async def confirm_clear_callback(client, callback_query):
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from VJForwardBot.database import db  # তুমি যেভাবে ডাটাবেস ইমপোর্ট করো সেটা ব্যবহার করো
+from database import db  # তুমি যেভাবে ডাটাবেস ইমপোর্ট করো সেটা ব্যবহার করো
 
 @Client.on_message(filters.command("setforward") & filters.private)
 async def set_forward_handler(client, message):
