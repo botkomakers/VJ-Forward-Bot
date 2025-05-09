@@ -7,7 +7,7 @@ user = Client(
     name="userbot_forwarder",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
-    session_string=Config.SESSION_STRING
+    session_string=Config.BOT_SESSION  # session string এখানে ব্যবহার করো
 )
 
 @user.on_message(filters.all)
@@ -19,11 +19,14 @@ async def auto_forward(client: Client, message: Message):
         from_chat_id = details.get("chat_id")
         to_chat_id = details.get("toid")
 
+        if not from_chat_id or not to_chat_id:
+            continue
+
         if message.chat.id == from_chat_id:
             try:
                 await message.forward(to_chat_id)
-                print(f"[{user_id}] {message.id} forwarded from {from_chat_id} to {to_chat_id}")
+                print(f"[{user_id}] Forwarded message {message.id} from {from_chat_id} to {to_chat_id}")
             except Exception as e:
-                print(f"Failed to forward for user {user_id}: {e}")
+                print(f"[{user_id}] Failed to forward: {e}")
 
 user.run()
