@@ -1,112 +1,147 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from config import Config
 from database import db
-from pyrogram.enums import ChatAction
+import os
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
-ADMIN_USERS = [Config.BOT_OWNER]
-BROADCAST_USER_STATE = {}
-BAN_STATE = {}
-UNBAN_STATE = {}
-
-def is_admin(user_id):
-    return user_id in ADMIN_USERS
-
-@Client.on_message(filters.command("admin") & filters.user(ADMIN_USERS))
-async def admin_panel(_, message: Message):
-    btn = [
-        [InlineKeyboardButton("More Options", callback_data="more_options")]
+# Admin Panel Command
+@Client.on_message(filters.command("admin") & filters.user(Config.BOT_OWNER))
+async def admin_panel(client, message: Message):
+    buttons = [
+        [InlineKeyboardButton("📢 Broadcast All", callback_data="admin_broadcast_all")],
+        [InlineKeyboardButton("⛔ Ban User", callback_data="admin_ban_user"),
+         InlineKeyboardButton("✅ Unban User", callback_data="admin_unban_user")],
+        [InlineKeyboardButton("🚫 Show Ban List", callback_data="admin_banlist")],
+        [InlineKeyboardButton("📊 Bot Status", callback_data="admin_status")],
+        [InlineKeyboardButton("🧨 Clear MongoDB", callback_data="admin_mongclear")],
+        [InlineKeyboardButton("⚙️ More Options", callback_data="admin_more")]
     ]
-    await message.reply("**Welcome to Admin Panel**", reply_markup=InlineKeyboardMarkup(btn))
+    await message.reply("**🛠 Welcome to the Admin Panel!**", reply_markup=InlineKeyboardMarkup(buttons))
 
-@Client.on_callback_query(filters.regex("more_options") & filters.user(ADMIN_USERS))
-async def more_options_handler(_, query):
-    btn = [
-        [InlineKeyboardButton("Broadcast to User", callback_data="broadcast_user_manual")],
-        [InlineKeyboardButton("Ban User", callback_data="ban_user_manual")],
-        [InlineKeyboardButton("Unban User", callback_data="unban_user_manual")],
-        [InlineKeyboardButton("Back", callback_data="admin_back")]
-    ]
-    await query.message.edit("**Select an Option:**", reply_markup=InlineKeyboardMarkup(btn))
 
-@Client.on_callback_query(filters.regex("admin_back") & filters.user(ADMIN_USERS))
-async def back_admin_menu(_, query):
-    btn = [
-        [InlineKeyboardButton("More Options", callback_data="more_options")]
-    ]
-    await query.message.edit("**Welcome to Admin Panel**", reply_markup=InlineKeyboardMarkup(btn))
+# Callback Handler
+@Client.on_callback_query(filters.regex("^admin_"))
+async def handle_admin_panel(client, callback):
+    user_id = callback.from_user.id
+    if user_id != Config.BOT_OWNER:
+        return await callback.answer("Access Denied!", show_alert=True)
 
-# Broadcast to specific user
-@Client.on_callback_query(filters.regex("broadcast_user_manual") & filters.user(ADMIN_USERS))
-async def ask_broadcast_user(_, query):
-    await query.message.reply("**Send the User ID to whom you want to forward a message.**")
-    BROADCAST_USER_STATE[query.from_user.id] = "awaiting_id"
+    action = callback.data.split("_", 1)[1]
+    await callback.answer()
 
-@Client.on_message(filters.text & filters.user(ADMIN_USERS))
-async def handle_broadcast_user_and_ban(_, message: Message):
-    user_id = message.from_user.id
-    if BROADCAST_USER_STATE.get(user_id) == "awaiting_id":
-        try:
-            target_id = int(message.text)
-            BROADCAST_USER_STATE[user_id] = target_id
-            await message.reply("**Now reply to any message you want to forward to that user.**")
-        except ValueError:
-            await message.reply("Invalid user ID. Please send a numeric ID.")
-        return
+    if action == "broadcast_all":
+        await callback.message.reply("ℹ️ Reply to a message and send `/broadcast` to broadcast to all users.")
 
-    elif isinstance(BROADCAST_USER_STATE.get(user_id), int) and message.reply_to_message:
-        target_id = BROADCAST_USER_STATE[user_id]
-        try:
-            await _.copy_message(chat_id=target_id, from_chat_id=message.chat.id, message_id=message.reply_to_message.id)
-            await message.reply(f"**Message forwarded to user `{target_id}` successfully.**")
-        except Exception as e:
-            await message.reply(f"Failed to forward: `{e}`")
-        del BROADCAST_USER_STATE[user_id]
-        return
+    elif action == "ban_user":
+        await callback.message.reply("📝 Send command:\n`/ban <user_id>`")
 
-    # Ban user flow
-    if BAN_STATE.get(user_id) == "awaiting_id":
-        try:
-            target_id = int(message.text)
-            await db.ban_user(target_id)
-            await message.reply(f"User `{target_id}` has been **banned**.")
-        except Exception as e:
-            await message.reply(f"Failed to ban user: `{e}`")
-        BAN_STATE.pop(user_id, None)
-        return
+    elif action == "unban_user":
+        await callback.message.reply("📝 Send command:\n`/unban <user_id>`")
 
-    # Unban user flow
-    if UNBAN_STATE.get(user_id) == "awaiting_id":
-        try:
-            target_id = int(message.text)
-            await db.remove_ban(target_id)
-            await message.reply(f"User `{target_id}` has been **unbanned**.")
-        except Exception as e:
-            await message.reply(f"Failed to unban user: `{e}`")
-        UNBAN_STATE.pop(user_id, None)
-        return
+    elif action == "banlist":
+        banned_users = await db.get_banned()
+        if not banned_users:
+            return await callback.message.reply("✅ No users are banned.")
+        text = "**⛔ Banned Users:**\n" + "\n".join([f"`{uid}`" for uid in banned_users])
+        await callback.message.reply(text)
 
-# Ban User
-@Client.on_callback_query(filters.regex("ban_user_manual") & filters.user(ADMIN_USERS))
-async def ask_ban_user(_, query):
-    await query.message.reply("**Send the User ID you want to ban.**")
-    BAN_STATE[query.from_user.id] = "awaiting_id"
+    elif action == "status":
+        msg = await callback.message.reply("⚙️ Generating status...")
 
-# Unban User
-@Client.on_callback_query(filters.regex("unban_user_manual") & filters.user(ADMIN_USERS))
-async def ask_unban_user(_, query):
-    await query.message.reply("**Send the User ID you want to unban.**")
-    UNBAN_STATE[query.from_user.id] = "awaiting_id"
+        total_users = await db.total_users_count()
+        total_bots = await db.bot.count_documents({})
+        total_userbots = await db.userbot.count_documents({})
+        banned = len(await db.get_banned())
+        forward_users = await db.forwad_count()
 
-# Shortcut command version: /broadcast_user 123456
-@Client.on_message(filters.command("broadcast_user") & filters.user(ADMIN_USERS))
-async def shortcut_broadcast_user(_, message: Message):
-    if len(message.command) < 2 or not message.reply_to_message:
-        await message.reply("Usage: `/broadcast_user user_id` (as reply to a message)", quote=True)
-        return
+        labels = ['Users', 'Bot Users', 'Userbots', 'Banned', 'Forwarders']
+        values = [total_users, total_bots, total_userbots, banned, forward_users]
+
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(labels, values, color=['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#937860'])
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.5, int(yval), ha='center')
+        plt.title("Bot Usage Statistics")
+        plt.tight_layout()
+        plt.savefig("status_graph.png")
+        plt.close()
+
+        caption = (
+            "**📊 Bot Stats:**\n\n"
+            f"👤 Total Users: `{total_users}`\n"
+            f"🤖 Bot Users: `{total_bots}`\n"
+            f"👥 Userbots: `{total_userbots}`\n"
+            f"⛔ Banned: `{banned}`\n"
+            f"📬 Forwarders: `{forward_users}`"
+        )
+        await client.send_photo(callback.message.chat.id, "status_graph.png", caption=caption)
+        await msg.delete()
+        os.remove("status_graph.png")
+
+    elif action == "mongclear":
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ Confirm Delete", callback_data="confirm_mongclear"),
+            InlineKeyboardButton("❌ Cancel", callback_data="cancel_mongclear")
+        ]])
+        await callback.message.reply(
+            "**⚠️ Confirm MongoDB Deletion**\nThis will erase all bot data!",
+            reply_markup=keyboard
+        )
+
+    elif action == "more":
+        text = (
+            "**⚙️ More Admin Options**\n\n"
+            "**➤ Broadcast to Specific User**\n"
+            "1. Reply to any message you want to forward.\n"
+            "2. Use the command:\n"
+            "`/broadcast_user <user_id>`\n\n"
+            "Example:\n"
+            "`/broadcast_user 123456789`\n\n"
+            "This will forward the replied message to that user."
+        )
+        await callback.message.reply(text)
+
+
+# MongoDB confirm/cancel
+@Client.on_callback_query(filters.regex("^(confirm_mongclear|cancel_mongclear)$"))
+async def confirm_clear_callback(client, callback_query):
+    if callback_query.from_user.id != Config.BOT_OWNER:
+        return await callback_query.answer("Access denied!", show_alert=True)
+
+    if callback_query.data == "cancel_mongclear":
+        return await callback_query.edit_message_text("❌ MongoDB wipe canceled.")
+
+    try:
+        await db.col.drop()
+        await db.bot.drop()
+        await db.userbot.drop()
+        await db.nfy.drop()
+        await db.chl.drop()
+        await callback_query.edit_message_text("✅ All MongoDB collections deleted successfully!")
+    except Exception as e:
+        await callback_query.edit_message_text(f"❌ Error during MongoDB clear:\n`{e}`")
+
+
+# Broadcast to specific user by replying
+@Client.on_message(filters.command("broadcast_user") & filters.user(Config.BOT_OWNER))
+async def broadcast_to_single_user(client: Client, message: Message):
+    if not message.reply_to_message:
+        return await message.reply("❌ Please reply to the message you want to send.")
+
+    if len(message.command) != 2:
+        return await message.reply("❌ Usage: `/broadcast_user <user_id>`")
+
     try:
         user_id = int(message.command[1])
-        await _.copy_message(chat_id=user_id, from_chat_id=message.chat.id, message_id=message.reply_to_message.id)
-        await message.reply(f"Message forwarded to user `{user_id}` successfully.")
+        await client.copy_message(
+            chat_id=user_id,
+            from_chat_id=message.chat.id,
+            message_id=message.reply_to_message.message_id
+        )
+        await message.reply(f"✅ Message sent to `{user_id}` successfully.")
     except Exception as e:
-        await message.reply(f"Failed to forward: `{e}`")
+        await message.reply(f"❌ Failed to send message:\n`{e}`")
