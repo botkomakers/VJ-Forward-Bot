@@ -12,33 +12,49 @@ from os import environ, execle, system
 
 START_TIME = time.time()
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
-# Ask Doubt on telegram @KingVJ01
+# ── Button Layout ──────────────────────────────────────────────
+#
+# Row-1 :  👨‍💻 Help   💁 About
+# Row-2 :  ⚙ Settings
+# Row-3 :  🔍 Support Group
+# Row-4 :  ❣️ Developer   🤖 Updates
+# Row-5 :  💝 YouTube Subscribe
+#
+# Join/Subscribe-ধরনের সবকিছু (Row-4/5) একদম নীচে রেখে দেওয়া হল
+# ────────────────────────────────────────────────────────────────
 
-main_buttons = [[
-    InlineKeyboardButton('❣️ ᴅᴇᴠᴇʟᴏᴘᴇʀ ❣️', url='https://t.me/movie_channel8')
-],[
-    InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion'),
-    InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url='https://t.me/movie_channel8')
-],[
-    InlineKeyboardButton('💝 sᴜʙsᴄʀɪʙᴇ ᴍʏ ʏᴏᴜᴛᴜʙᴇ ᴄʜᴀɴɴᴇʟ', url='https://youtube.com/@movie_channel8')
-],[
-    InlineKeyboardButton('👨‍💻 ʜᴇʟᴘ', callback_data='help'),
-    InlineKeyboardButton('💁 ᴀʙᴏᴜᴛ', callback_data='about')
-],[
-    InlineKeyboardButton('⚙ sᴇᴛᴛɪɴɢs', callback_data='settings#main')
-]]
+main_buttons = [
+    [  # Row-1
+        InlineKeyboardButton('👨‍💻 ʜᴇʟᴘ',   callback_data='help'),
+        InlineKeyboardButton('💁 ᴀʙᴏᴜᴛ',  callback_data='about')
+    ],
+    [  # Row-2
+        InlineKeyboardButton('⚙ sᴇᴛᴛɪɴɢs', callback_data='settings#main')
+    ],
+    [  # Row-3
+        InlineKeyboardButton('🔍 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url='https://t.me/vj_bot_disscussion')
+    ],
+    [  # Row-4  (join-channel links)
+        InlineKeyboardButton('❣️ ᴅᴇᴠᴇʟᴏᴘᴇʀ ❣️', url='https://t.me/movie_channel8'),
+        InlineKeyboardButton('🤖 ᴜᴘᴅᴀᴛᴇs',      url='https://t.me/movie_channel8')
+    ],
+    [  # Row-5
+        InlineKeyboardButton('💝 ʏᴏᴜᴛᴜʙᴇ ᴄʜᴀɴɴᴇʟ', url='https://youtube.com/@movie_channel8')
+    ]
+]
 
+# ── /start Handler ─────────────────────────────────────────────
 @Client.on_message(filters.private & filters.command(['start']))
 async def start(client, message):
     user = message.from_user
+
+    # প্রথমবার bot-এ আসলে DB-তে যোগ করা
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
-    
+
     reply_markup = InlineKeyboardMarkup(main_buttons)
-    image_url = "https://i.ibb.co/21RKmKDG/file-1485.jpg"
-    
+    image_url    = "https://i.ibb.co/21RKmKDG/file-1485.jpg"
+
     await client.send_photo(
         chat_id=message.chat.id,
         photo=image_url,
