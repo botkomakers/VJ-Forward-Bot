@@ -255,11 +255,11 @@ async def get_song(query):
                 "image": first["image"][2]["link"]
             }
 
-@bot.on_message(filters.command("start"))
+@bot.on_message(filters.command("song"))
 async def start(client, message: Message):
     await message.reply("Send me a song name and I'll find the audio for you!")
 
-@bot.on_message(filters.text & ~filters.command("start"))
+@bot.on_message(filters.text & ~filters.command("song"))
 async def song_search(client, message: Message):
     query = message.text
     msg = await message.reply("🔍 Searching for your song...")
