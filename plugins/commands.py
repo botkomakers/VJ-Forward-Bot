@@ -30,20 +30,21 @@ main_buttons = [[
     InlineKeyboardButton('⚙ sᴇᴛᴛɪɴɢs', callback_data='settings#main')
 ]]
 
-# Don't Remove Credit Tg - @VJ_Botz
-# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@movie_channel8
-# Ask Doubt on telegram @KingVJ01
-
 @Client.on_message(filters.private & filters.command(['start']))
 async def start(client, message):
     user = message.from_user
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
+    
     reply_markup = InlineKeyboardMarkup(main_buttons)
-    await client.send_message(
+    image_url = "https://i.ibb.co/21RKmKDG/file-1485.jpg"
+    
+    await client.send_photo(
         chat_id=message.chat.id,
-        reply_markup=reply_markup,
-        text=Script.START_TXT.format(message.from_user.first_name))
+        photo=image_url,
+        caption=Script.START_TXT.format(user.first_name),
+        reply_markup=reply_markup
+    )
 
 # Don't Remove Credit Tg - @VJ_Botz
 # Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
