@@ -158,10 +158,9 @@ Click 'Yes' only if everything looks correct:</code>
 <b>✅ All set? Click the button below to proceed.</b>
 """
 
-<i>° [{botname}](t.me/{botuname}) must be admin in **TARGET CHAT**</i> (`{to_chat}`)
-<i>° If the **SOURCE CHAT** is private your userbot must be member or your bot must be admin in there also</b></i>
+<<i>° <a href="https://t.me/{botuname}">{botname}</a> must be admin in <b>TARGET CHAT</b></i> (<code>{to_chat}</code>)
+<i>° If the <b>SOURCE CHAT</b> is private your userbot must be member or your bot must be admin in there also</i>
 
-<b>If the above is checked then the yes button can be clicked</b>"""
-"""
+<b>If the above is checked then the yes button can be clicked</b>
 
 SETTINGS_TXT = """<b>change your settings as your wish</b>"""
