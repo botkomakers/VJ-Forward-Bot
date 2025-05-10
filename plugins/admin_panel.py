@@ -130,18 +130,32 @@ async def confirm_clear_callback(client, callback_query):
 @Client.on_message(filters.command("broadcast_user") & filters.user(Config.BOT_OWNER))
 async def broadcast_to_single_user(client: Client, message: Message):
     if not message.reply_to_message:
-        return await message.reply("❌ Please reply to the message you want to send.")
+        return await message.reply("❌ Please reply to the message you want to forward.")
 
     if len(message.command) != 2:
         return await message.reply("❌ Usage: `/broadcast_user <user_id>`")
 
     try:
         user_id = int(message.command[1])
-        await client.copy_message(
-            chat_id=user_id,
-            from_chat_id=message.chat.id,
-            message_id=message.reply_to_message.message_id
-        )
-        await message.reply(f"✅ Message sent to `{user_id}` successfully.")
+        original_message = message.reply_to_message
+
+        if original_message.text:
+            await client.send_message(user_id, original_message.text)
+        elif original_message.photo:
+            await client.send_photo(user_id, original_message.photo.file_id, caption=original_message.caption)
+        elif original_message.document:
+            await client.send_document(user_id, original_message.document.file_id, caption=original_message.caption)
+        elif original_message.video:
+            await client.send_video(user_id, original_message.video.file_id, caption=original_message.caption)
+        elif original_message.audio:
+            await client.send_audio(user_id, original_message.audio.file_id, caption=original_message.caption)
+        elif original_message.voice:
+            await client.send_voice(user_id, original_message.voice.file_id, caption=original_message.caption)
+        elif original_message.sticker:
+            await client.send_sticker(user_id, original_message.sticker.file_id)
+        else:
+            return await message.reply("❌ Unsupported media type.")
+
+        await message.reply(f"✅ Message successfully sent to `{user_id}`.")
     except Exception as e:
         await message.reply(f"❌ Failed to send message:\n`{e}`")
