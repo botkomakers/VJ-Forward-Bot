@@ -1,50 +1,16 @@
-"""
-admin_panel.py
-Telegram bot admin panel – Pyrogram (asyncio)
-
-Features
-========
-✓ /admin প্যানেল বাটনগুলো
-  ├─ 📢 Broadcast All        →  Reply + /broadcast   (অন্যত্র হ্যান্ডল করো)
-  ├─ 📤 Broadcast to User    →  ইন্টার‍্যাকটিভ: user-id → message/forward
-  ├─ ⛔ Ban / ✅ Unban        →  /ban id  /unban id
-  ├─ 🚫 Show Ban List
-  ├─ 📊 Bot Status           →  গ্রাফ + অটো-ডিলিট “Generating…”
-  └─ 🧨 Clear MongoDB        →  দুই-ক্লিক কনফার্ম
-
-db মডিউল-এ থাকতে হবে:
-    db.bot, db.userbot, db.nfy, db.chl, db.col  ←  MongoDB collections
-    db.get_banned()           → list[int]
-    db.total_users_count()    → int
-    db.forwad_count()         → int
-    db.ban_user(id) / db.unban_user(id)
-
-Config এ থাকতে হবে:
-    BOT_OWNER  (int)    – অ্যাডমিন টেলিগ্রাম ID
-"""
-
 import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from pyrogram import Client, filters
-from pyrogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-)
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from config import Config
-from database import db   # তোমার নিজস্ব database helper
+from database import db
 
-# ───────────────────────────────────────────────────────────────
-# ইন-মেমরি স্টেট; রিস্টার্টে মুছে যাবে (Persistent FSM চাইলে DB ব্যাবহার করো)
-admin_states: dict[int, dict] = {}      # {admin_id: {"step": str, "...": ...}}
+admin_states: dict[int, dict] = {}  # FSM state
 
-# ───────────────────────────────────────────────────────────────
-# /admin – মূল বোতাম প্যানেল
 @Client.on_message(filters.command("admin") & filters.user(Config.BOT_OWNER))
 async def admin_panel(_: Client, msg: Message):
     buttons = [
@@ -63,39 +29,30 @@ async def admin_panel(_: Client, msg: Message):
         reply_markup=InlineKeyboardMarkup(buttons),
     )
 
-# ───────────────────────────────────────────────────────────────
-# প্যানেল-বাটন হ্যান্ডলার
 @Client.on_callback_query(filters.regex(r"^admin_"))
 async def admin_buttons(client: Client, cb: CallbackQuery):
     if cb.from_user.id != Config.BOT_OWNER:
         return await cb.answer("Access Denied!", show_alert=True)
 
     action = cb.data.split("_", 1)[1]
-    await cb.answer()      # remove loading animation
+    await cb.answer()
 
-    # --- simple help prompts ----------
     if action == "broadcast_all":
-        return await cb.message.reply(
-            "ℹ️ Reply to any message with `/broadcast` to send it to **all users**."
-        )
+        return await cb.message.reply("ℹ️ Reply to any message with `/broadcast` to send it to **all users**.")
     if action == "ban_user":
         return await cb.message.reply("📝 Use command:\n`/ban <user_id>`")
     if action == "unban_user":
         return await cb.message.reply("📝 Use command:\n`/unban <user_id>`")
-
-    # --- interactive broadcast to single user ----------
     if action == "broadcast_user":
         admin_states[cb.from_user.id] = {"step": "awaiting_user_id"}
         return await cb.message.reply("🔢 **Enter the Telegram user-ID** you want to message:")
 
-    # --- show ban list ----------
     if action == "banlist":
         banned = await db.get_banned()
         text = "✅ No users are banned." if not banned else \
                "**⛔ Banned Users:**\n" + "\n".join(f"`{uid}`" for uid in banned)
         return await cb.message.reply(text)
 
-    # --- status ----------
     if action == "status":
         wait = await cb.message.reply("⚙️ Generating status...")
 
@@ -129,7 +86,6 @@ async def admin_buttons(client: Client, cb: CallbackQuery):
         await wait.delete();  os.remove("stats.png")
         return
 
-    # --- mongodb clear confirm ----------
     if action == "mongclear":
         kb = InlineKeyboardMarkup([[
             InlineKeyboardButton("✅ Confirm Delete", callback_data="confirm_mongclear"),
@@ -140,8 +96,6 @@ async def admin_buttons(client: Client, cb: CallbackQuery):
             reply_markup=kb,
         )
 
-# ───────────────────────────────────────────────────────────────
-# MongoDB wipe confirmation
 @Client.on_callback_query(filters.regex(r"^(confirm_mongclear|cancel_mongclear)$"))
 async def confirm_wipe(_: Client, cb: CallbackQuery):
     if cb.from_user.id != Config.BOT_OWNER:
@@ -158,17 +112,19 @@ async def confirm_wipe(_: Client, cb: CallbackQuery):
     except Exception as e:
         await cb.edit_message_text(f"❌ Error during MongoDB clear:\n`{e}`")
 
-# ───────────────────────────────────────────────────────────────
-# ইন্টার‍্যাকটিভ Broadcast-to-User FSM
+# ✅ ফিক্সড FSM – হাইজ্যাক সমস্যা মুক্ত
 @Client.on_message(filters.private & filters.user(Config.BOT_OWNER))
 async def broadcast_to_user_fsm(client: Client, msg: Message):
     aid = msg.from_user.id
-    if aid not in admin_states:
-        return   # no pending interaction
+    state_data = admin_states.get(aid)
 
-    state = admin_states[aid]["step"]
+    if not state_data:
+        return  # FSM না থাকলে অন্য হ্যান্ডলার কাজ করবে
 
-    # STEP 1 – waiting for user-ID
+    state = state_data.get("step")
+    if state not in ["awaiting_user_id", "awaiting_message"]:
+        return
+
     if state == "awaiting_user_id":
         try:
             target = int(msg.text.strip())
@@ -180,23 +136,19 @@ async def broadcast_to_user_fsm(client: Client, msg: Message):
         except ValueError:
             return await msg.reply("❌ Please send a valid numeric Telegram user-ID.")
 
-    # STEP 2 – waiting for the message to forward
     if state == "awaiting_message":
-        target = admin_states[aid]["target_id"]
+        target = state_data["target_id"]
         try:
             if msg.forward_from or msg.forward_from_chat:
                 await msg.forward(target)
             else:
                 await client.copy_message(target, msg.chat.id, msg.id)
-
             await msg.reply(f"✅ Message successfully sent to `{target}`.")
         except Exception as e:
             await msg.reply(f"❌ Failed to send message:\n`{e}`")
         finally:
-            admin_states.pop(aid, None)   # reset FSM
+            admin_states.pop(aid, None)
 
-# ───────────────────────────────────────────────────────────────
-# /ban  /unban  commands
 @Client.on_message(filters.command("ban") & filters.user(Config.BOT_OWNER))
 async def ban_cmd(_: Client, msg: Message):
     if len(msg.command) != 2:
@@ -218,11 +170,3 @@ async def unban_cmd(_: Client, msg: Message):
         await msg.reply(f"✅ User `{uid}` unbanned.")
     except Exception as e:
         await msg.reply(f"❌ Error:\n`{e}`")
-
-
-
-
-
-
-
-
