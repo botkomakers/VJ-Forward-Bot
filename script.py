@@ -12,12 +12,12 @@ Tap the <u>𝗛𝗲𝗹𝗽</u> button to explore all features.</b>"""
     HELP_TXT = """<b><u>🛠 𝗛𝗲𝗹𝗽 & 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀</u></b>
 
 <b>𝗕𝗮𝘀𝗶𝗰 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀:</b>
-• <code>/start</code> – Start the bot or check status  
-• <code>/forward</code> – Begin message forwarding  
-• <code>/settings</code> – Configure preferences  
-• <code>/stop</code> – Stop current process  
-• <code>/reset</code> – Reset to default  
-• <code>/unequify</code> – Remove duplicates  
+• /start – Start the bot or check status  
+• /forward – Begin message forwarding  
+• /settings – Configure preferences  
+• /stop – Stop current process  
+• /reset – Reset to default  
+• /unequify – Remove duplicates  
 
 <b>𝗔𝗱𝘃𝗮𝗻𝗰𝗲𝗱 𝗙𝗲𝗮𝘁𝘂𝗿𝗲𝘀:</b>
 • Public/Private Channel Forwarding  
@@ -69,9 +69,9 @@ Tap the <u>𝗛𝗲𝗹𝗽</u> button to explore all features.</b>"""
 ╚═══════════════════════</b>
 """
 
-    FROM_MSG = "<b>📥 Send the <u>last message</u> or its <u>link</u> from the source channel.</b>\n<code>/cancel</code> – Abort"
+    FROM_MSG = "<b>📥 Send the <u>last message</u> or its <u>link</u> from the source channel.</b>\n/cancel – Abort"
 
-    TO_MSG = "<b>📤 Choose the <u>target channel</u> below from the buttons.</b>\n<code>/cancel</code> – Cancel"
+    TO_MSG = "<b>📤 Choose the <u>target channel</u> below from the buttons.</b>\n/cancel – Cancel"
 
     SKIP_MSG = """<b>⏭ 𝗦𝗸𝗶𝗽 𝗖𝗼𝘂𝗻𝘁</b>
 
@@ -92,13 +92,21 @@ Enter how many messages to skip before starting.
 <b>
 ╔═══❰ 𝗙𝗼𝗿𝘄𝗮𝗿𝗱 𝗥𝗲𝗽𝗼𝗿𝘁 ❱═══
 ║• 📥 Fetched: <code>{}</code>
+•
 ║• ✅ Sent: <code>{}</code>
+•
 ║• 🧩 Skipped Duplicates: <code>{}</code>
+•
 ║• 🗑 Deleted: <code>{}</code>
+•
 ║• ⏭ Skipped: <code>{}</code>
+•
 ║• 🔍 Filtered: <code>{}</code>
+•
 ║• 📶 Status: <code>{}</code>
+•
 ║• 📊 Progress: <code>{}</code>%
+•
 ╚═══❰ {} ❱═══</b>
 """
 
