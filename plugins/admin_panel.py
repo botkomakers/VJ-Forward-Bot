@@ -229,53 +229,55 @@ async def unban_cmd(_: Client, msg: Message):
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
+from config import Config
 import aiohttp
-import random
-import traceback
 
-class Config:
-    BOT_OWNER = 7862181538
-    LOG_CHANNEL = -1002589776901
+bot = Client(
+    "SongFinderBot",
+    bot_token=Config.BOT_TOKEN,
+    api_id=Config.API_ID,
+    api_hash=Config.API_HASH
+)
 
-async def get_english_joke():
+# JioSaavn Song Search
+async def get_song(query):
+    api = f"https://saavn.dev/api/search/songs?query={query}"
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://v2.jokeapi.dev/joke/Any?format=txt") as resp:
-            return await resp.text()
+        async with session.get(api) as resp:
+            data = await resp.json()
+            if not data.get("data"):
+                return None
+            first = data["data"]["results"][0]
+            return {
+                "title": first["name"],
+                "artist": ", ".join([a["name"] for a in first["primaryArtists"]]),
+                "media_url": first["downloadUrl"][-1]["link"],
+                "image": first["image"][2]["link"]
+            }
 
-async def get_hindi_joke():
-    hindi_jokes = [
-        "पप्पू: मम्मी मुझे चाँद पर जाना है।\nमम्मी: क्योंकि वहां की ग्रेविटी कम है, वजन भी कम लगेगा!",
-        "टीचर: बताओ सबसे बड़ी मेहनत कौन करता है?\nराजू: मच्छर, जान पर खेल कर भी खून देता है!"
-    ]
-    return random.choice(hindi_jokes)
+@bot.on_message(filters.command("start"))
+async def start(client, message: Message):
+    await message.reply("Send me a song name and I'll find the audio for you!")
 
-async def get_bengali_joke():
-    bengali_jokes = [
-        "ছাত্র: স্যার, ঘুমাচ্ছি না, চোখ বন্ধ করে পড়া মনে করছি!\nস্যার: বাহ! তাইলে দাঁড়িয়ে দাঁড়িয়ে মনে কর।",
-        "বউ: তুমি কুকুর পছন্দ করো?\nস্বামী: হ্যাঁ, বিশেষ করে বারবিকিউ করে!"
-    ]
-    return random.choice(bengali_jokes)
-
-@Client.on_message(filters.command("joke") & filters.user(Config.BOT_OWNER))
-async def send_joke(client: Client, message: Message):
-    msg = await message.reply("⏳ Trying to fetch jokes...")
+@bot.on_message(filters.text & ~filters.command("start"))
+async def song_search(client, message: Message):
+    query = message.text
+    msg = await message.reply("🔍 Searching for your song...")
 
     try:
-        en = await get_english_joke()
-        hi = await get_hindi_joke()
-        bn = await get_bengali_joke()
+        song = await get_song(query)
+        if not song:
+            return await msg.edit("❌ No song found!")
 
-        text = (
-            "**🤣 Multi-Language Joke**\n\n"
-            f"**English:**\n{en}\n\n"
-            f"**Hindi (हिंदी):**\n{hi}\n\n"
-            f"**Bengali (বাংলা):**\n{bn}"
+        await client.send_audio(
+            chat_id=message.chat.id,
+            audio=song["media_url"],
+            title=song["title"],
+            performer=song["artist"],
+            thumb=song["image"]
         )
-
-        await client.send_message(Config.LOG_CHANNEL, text)
-        await msg.edit("✅ Joke posted to log channel successfully!")
-
+        await msg.delete()
     except Exception as e:
-        tb = traceback.format_exc()
-        print(tb)  # টার্মিনালে এরর দেখাবে
-        await msg.edit(f"❌ Exception occurred:\n`{e}`")
+        await msg.edit(f"❌ Failed to fetch song:\n`{e}`")
+
+bot.run()
