@@ -1,115 +1,143 @@
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from config import Config
-from database import db
+# bot/plugins/admin_panel.py
+
 import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from config import Config
+from database import db
 
-# /admin command
-@Client.on_message(filters.command("admin") & filters.user(Config.BOT_OWNER))
-async def admin_panel(client, message: Message):
-    buttons = [
-        [InlineKeyboardButton("📢 Broadcast All", callback_data="admin_broadcast_all")],
-        [InlineKeyboardButton("📤 Broadcast to User", callback_data="admin_broadcast_user")],
-        [InlineKeyboardButton("⛔ Ban User", callback_data="admin_ban_user"),
-         InlineKeyboardButton("✅ Unban User", callback_data="admin_unban_user")],
-        [InlineKeyboardButton("🚫 Show Ban List", callback_data="admin_banlist")],
-        [InlineKeyboardButton("📊 Bot Status", callback_data="admin_status")],
-        [InlineKeyboardButton("🧨 Clear MongoDB", callback_data="admin_mongclear")]
-    ]
-    await message.reply("**🛠 Welcome to the Admin Panel!**", reply_markup=InlineKeyboardMarkup(buttons))
+OWNER_FILTER = filters.user(Config.BOT_OWNER)
 
+# Main Admin Panel Button
+@Client.on_message(filters.command("admin") & OWNER_FILTER)
+async def show_admin_panel(client, message: Message):
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📣 Broadcast All", callback_data="broadcast_all")],
+        [InlineKeyboardButton("🔨 Ban/Unban User", callback_data="ban_unban")],
+        [InlineKeyboardButton("📊 Status", callback_data="status")],
+        [InlineKeyboardButton("🗑 Clear DB", callback_data="clear_db")]
+    ])
+    await message.reply("⚙️ **Admin Control Panel**", reply_markup=keyboard)
 
-# Handle admin panel buttons
-@Client.on_callback_query(filters.regex("^admin_"))
-async def handle_admin_panel(client, callback):
-    user_id = callback.from_user.id
-    if user_id != Config.BOT_OWNER:
-        return await callback.answer("Access Denied!", show_alert=True)
+# Broadcast All
+@Client.on_callback_query(filters.regex("^broadcast_all$") & OWNER_FILTER)
+async def broadcast_prompt(client, query: CallbackQuery):
+    await query.message.edit("✏️ Reply to a message with `/broadcast` to send it to all users.")
 
-    action = callback.data.split("_", 1)[1]
-    await callback.answer()
+@Client.on_message(filters.command("broadcast") & OWNER_FILTER)
+async def broadcast_all(client, message: Message):
+    if not message.reply_to_message:
+        return await message.reply("❌ Reply to a message to broadcast.")
+    sent = 0
+    async for user in db.get_all_users():
+        try:
+            await message.reply_to_message.copy(chat_id=user["id"])
+            sent += 1
+        except: continue
+    await message.reply(f"✅ Broadcast sent to `{sent}` users.")
 
-    if action == "broadcast_all":
-        await callback.message.reply("ℹ️ Reply to a message and send `/broadcast` to broadcast it to all users.")
+# Ban/Unban
+@Client.on_callback_query(filters.regex("^ban_unban$") & OWNER_FILTER)
+async def ban_menu(client, query: CallbackQuery):
+    await query.message.edit("Use:\n- `/ban <user_id>`\n- `/unban <user_id>`\n- `/banlist`")
 
-    elif action == "broadcast_user":
-        await callback.message.reply("📝 Send command:\n`/broadcast_user <user_id> <message>`")
+@Client.on_message(filters.command("ban") & OWNER_FILTER)
+async def ban_user(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("Usage: /ban <user_id>")
+    try:
+        user_id = int(message.command[1])
+        await db.ban_user(user_id)
+        await message.reply(f"⛔ User `{user_id}` banned.")
+    except Exception as e:
+        await message.reply(f"❌ Error:\n`{e}`")
 
-    elif action == "ban_user":
-        await callback.message.reply("📝 Send command:\n`/ban <user_id>`")
+@Client.on_message(filters.command("unban") & OWNER_FILTER)
+async def unban_user(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("Usage: /unban <user_id>")
+    try:
+        user_id = int(message.command[1])
+        await db.remove_ban(user_id)
+        await message.reply(f"✅ User `{user_id}` unbanned.")
+    except Exception as e:
+        await message.reply(f"❌ Error:\n`{e}`")
 
-    elif action == "unban_user":
-        await callback.message.reply("📝 Send command:\n`/unban <user_id>`")
+@Client.on_message(filters.command("banlist") & OWNER_FILTER)
+async def show_banlist(client, message: Message):
+    banned = await db.get_banned()
+    if not banned:
+        return await message.reply("✅ No users are banned.")
+    text = "**⛔ Banned Users:**\n" + "\n".join([f"`{uid}`" for uid in banned])
+    await message.reply(text)
 
-    elif action == "banlist":
-        banned_users = await db.get_banned()
-        if not banned_users:
-            return await callback.message.reply("✅ No users are banned.")
-        text = "**⛔ Banned Users:**\n" + "\n".join([f"`{uid}`" for uid in banned_users])
-        await callback.message.reply(text)
+# Status Generator
+async def generate_status_graph():
+    total_users = await db.total_users_count()
+    total_bots = await db.bot.count_documents({})
+    total_userbots = await db.userbot.count_documents({})
+    banned = len(await db.get_banned())
+    forward_users = await db.forwad_count()
 
-    elif action == "status":
-        await callback.message.reply("⚙️ Generating status...")
+    labels = ['Users', 'Bots', 'Userbots', 'Banned', 'Forwarders']
+    values = [total_users, total_bots, total_userbots, banned, forward_users]
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(labels, values, color=['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#937860'])
+    plt.title("Bot Statistics")
+    for bar in bars:
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, f'{int(bar.get_height())}', ha='center')
+    plt.tight_layout()
+    plt.savefig("status.png")
+    plt.close()
 
+@Client.on_callback_query(filters.regex("^status$") & OWNER_FILTER)
+async def bot_status(client, query: CallbackQuery):
+    loading = await query.message.edit("⚙️ Generating status...")
+    try:
+        await generate_status_graph()
         total_users = await db.total_users_count()
         total_bots = await db.bot.count_documents({})
         total_userbots = await db.userbot.count_documents({})
         banned = len(await db.get_banned())
         forward_users = await db.forwad_count()
-
-        labels = ['Users', 'Bot Users', 'Userbots', 'Banned', 'Forwarders']
-        values = [total_users, total_bots, total_userbots, banned, forward_users]
-
-        plt.figure(figsize=(10, 6))
-        bars = plt.bar(labels, values, color=['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#937860'])
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0.5, int(yval), ha='center')
-        plt.title("Bot Usage Statistics")
-        plt.tight_layout()
-        plt.savefig("status_graph.png")
-        plt.close()
-
         caption = (
-            "**📊 Bot Stats:**\n\n"
-            f"👤 Total Users: `{total_users}`\n"
-            f"🤖 Bot Users: `{total_bots}`\n"
+            "**📊 Bot Status:**\n\n"
+            f"👤 Users: `{total_users}`\n"
+            f"🤖 Bots: `{total_bots}`\n"
             f"👥 Userbots: `{total_userbots}`\n"
             f"⛔ Banned: `{banned}`\n"
             f"📬 Forwarders: `{forward_users}`"
         )
-        await client.send_photo(callback.message.chat.id, "status_graph.png", caption=caption)
-        os.remove("status_graph.png")
+        await query.message.reply_photo("status.png", caption=caption)
+        await loading.delete()
+        os.remove("status.png")
+    except Exception as e:
+        await query.message.edit(f"❌ Error: `{e}`")
 
-    elif action == "mongclear":
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("✅ Confirm Delete", callback_data="confirm_mongclear"),
-            InlineKeyboardButton("❌ Cancel", callback_data="cancel_mongclear")
-        ]])
-        await callback.message.reply(
-            "**⚠️ Confirm MongoDB Deletion**\nThis will erase all bot data!",
-            reply_markup=keyboard
-        )
+# Clear MongoDB
+@Client.on_callback_query(filters.regex("^clear_db$") & OWNER_FILTER)
+async def confirm_clear(client, query: CallbackQuery):
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ Confirm", callback_data="confirm_mong_clear"),
+            InlineKeyboardButton("❌ Cancel", callback_data="cancel_mong_clear")
+        ]
+    ])
+    await query.message.edit("⚠️ Confirm to delete all MongoDB data!", reply_markup=keyboard)
 
-
-# Confirm MongoDB clear
-@Client.on_callback_query(filters.regex("^(confirm_mongclear|cancel_mongclear)$"))
-async def confirm_clear_callback(client, callback_query):
-    if callback_query.from_user.id != Config.BOT_OWNER:
-        return await callback_query.answer("Access denied!", show_alert=True)
-
-    if callback_query.data == "cancel_mongclear":
-        return await callback_query.edit_message_text("❌ MongoDB wipe canceled.")
-
+@Client.on_callback_query(filters.regex("^(confirm_mong_clear|cancel_mong_clear)$") & OWNER_FILTER)
+async def handle_clear(client, query: CallbackQuery):
+    if query.data == "cancel_mong_clear":
+        return await query.message.edit("❌ Cancelled.")
     try:
         await db.col.drop()
         await db.bot.drop()
         await db.userbot.drop()
         await db.nfy.drop()
         await db.chl.drop()
-        await callback_query.edit_message_text("✅ All MongoDB collections deleted successfully!")
+        await query.message.edit("✅ MongoDB cleared successfully.")
     except Exception as e:
-        await callback_query.edit_message_text(f"❌ Error during MongoDB clear:\n`{e}`")
+        await query.message.edit(f"❌ Error: `{e}`")
