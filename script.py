@@ -2,38 +2,44 @@ import os
 from config import Config
 
 class  Script(object):
-  START_TXT = """<b>ʜɪ {}
-  
-ɪ'ᴍ ᴀ ᴀᴅᴠᴀɴᴄᴇᴅ ꜰᴏʀᴡᴀʀᴅ ʙᴏᴛ
-ɪ ᴄᴀɴ ꜰᴏʀᴡᴀʀᴅ ᴀʟʟ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ ᴏɴᴇ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴀɴᴏᴛʜᴇʀ ᴄʜᴀɴɴᴇʟ</b>
+  START_TXT = """
+<b>👋 Hello, {}!</b>
 
-**ᴄʟɪᴄᴋ ʜᴇʟᴘ ʙᴜᴛᴛᴏɴ ᴛᴏ ᴋɴᴏᴡ ᴍᴏʀᴇ ᴀʙᴏᴜᴛ ᴍᴇ**"""
-  HELP_TXT = """<b><u>🔆 Help</b></u>
+🤖 I’m an <b>Advanced Forward Bot</b> — built to help you seamlessly forward messages from one Telegram channel to another with ease and speed.
 
-<u>**📚 Available commands:**</u>
-<b>⏣ __/start - check I'm alive__ 
-⏣ __/forward - forward messages__
-⏣ __/settings - configure your settings__
-⏣ __ /cleandup - delete duplicate media messages in chats__
-⏣ __ /stop - stop your ongoing tasks__
-⏣ __ /reset - reset your settings__</b>
+<b>💡 Tip:</b> Use the buttons below to get started or click <b>Help</b> to learn more about how I work.
+"""
+  HELP_TXT = """
+<b><u>🔆 Help</u></b>
 
-<b><u>💢 Features:</b></u>
-<b>► __Forward message from public channel to your channel without admin permission. if the channel is private need admin permission, if you can't give admin permission then use userbot, but in userbot there is a chance to get your account ban so use fake account__
-► __custom caption__
-► __custom button__
-► __skip duplicate messages__
-► __filter type of messages__</b>
+<u>📚 <b>Available Commands:</b></u>
+<b>⏣ /start</b> — Check if I'm alive
+<b>⏣ /forward</b> — Forward messages
+<b>⏣ /settings</b> — Configure your settings
+<b>⏣ /cleandup</b> — Delete duplicate media messages in chats
+<b>⏣ /stop</b> — Stop your ongoing tasks
+<b>⏣ /reset</b> — Reset your settings
+
+<u>💢 <b>Features:</b></u>
+<b>► Forward messages from public channels to your channel without admin permission. 
+    For private channels, admin permission is needed. If you can't give admin access, use a userbot (though this could risk account bans, so be careful and consider using a fake account).
+► Custom caption
+► Custom button
+► Skip duplicate messages
+► Filter types of messages</b>
 """
 
-  HOW_USE_TXT = """<b><u>⚠️ Before Forwarding:</b></u>
-<b>► __add a bot or userbot__
-► __add atleast one to channel__ `(your bot/userbot must be admin in there)`
-► __You can add chats or bots by using /settings__
-► __if the **From Channel** is private your userbot must be member in there or your bot must need admin permission in there also__
-► __Then use /forward to forward messages__
+  HOW_USE_TXT = """
+<b><u>⚠️ Before Forwarding:</u></b>
 
-► ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ [ᴛᴜᴛᴏʀɪᴀʟ ᴠɪᴅᴇᴏ](https://youtu.be/wO1FE-lf35I)</b>"""
+<b>► Add a bot or userbot to your chat.</b>
+<b>► Add at least one channel to the bot/userbot (your bot/userbot must be admin in that channel).</b>
+<b>► Use /settings to add chats or bots to your setup.</b>
+<b>► If the <u>From Channel</u> is private, your userbot must be a member there, or your bot must be admin in that channel.</b>
+<b>► Then use /forward to forward messages.</b>
+
+<b>🎥 ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ: [Tutorial Video](https://youtu.be/wO1FE-lf35I)</b>
+"""
 
   ABOUT_TXT = """<b>
 ╔════❰ ғᴏʀᴡᴀʀᴅ ʙᴏᴛ ❱═❍⊱❁۪۪
