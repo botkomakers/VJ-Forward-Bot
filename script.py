@@ -158,9 +158,9 @@ Click 'Yes' only if everything looks correct:</code>
 <b>✅ All set? Click the button below to proceed.</b>
 """
 
-<i>\u26A0 • <a href="https://t.me/{botuname}">{botname}</a> must be an admin in the <b>TARGET CHAT</b></i> <code>({to_chat})</code>
+<i>• <a href="https://t.me/{botuname}">{botname}</a> must be an admin in the <b>TARGET CHAT</b></i> <code>({to_chat})</code>
 
-<i>🔒 • If the <b>SOURCE CHAT</b> is private, your userbot must be a member OR your bot must be an admin there too.</i>
+<i>• If the <b>SOURCE CHAT</b> is private, your userbot must be a member OR your bot must be an admin there too.</i>
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
