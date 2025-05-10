@@ -232,20 +232,13 @@ from pyrogram.types import Message
 from config import Config
 import aiohttp
 
-bot = Client(
-    "SongFinderBot",
-    bot_token=Config.BOT_TOKEN,
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH
-)
-
-# JioSaavn Song Search
+# JioSaavn Song Search Function
 async def get_song(query):
     api = f"https://saavn.dev/api/search/songs?query={query}"
     async with aiohttp.ClientSession() as session:
         async with session.get(api) as resp:
             data = await resp.json()
-            if not data.get("data"):
+            if not data.get("data") or not data["data"]["results"]:
                 return None
             first = data["data"]["results"][0]
             return {
@@ -255,13 +248,13 @@ async def get_song(query):
                 "image": first["image"][2]["link"]
             }
 
-@bot.on_message(filters.command("song"))
-async def start(client, message: Message):
-    await message.reply("Send me a song name and I'll find the audio for you!")
+# Command: /song <name>
+@Client.on_message(filters.command("song"))
+async def song_command(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply("❌ Usage: `/song song name`", quote=True)
 
-@bot.on_message(filters.text & ~filters.command("song"))
-async def song_search(client, message: Message):
-    query = message.text
+    query = " ".join(message.command[1:])
     msg = await message.reply("🔍 Searching for your song...")
 
     try:
@@ -278,6 +271,4 @@ async def song_search(client, message: Message):
         )
         await msg.delete()
     except Exception as e:
-        await msg.edit(f"❌ Failed to fetch song:\n`{e}`")
-
-bot.run()
+        await msg.edit(f"❌ Error:\n`{e}`")
