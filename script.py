@@ -62,12 +62,48 @@ class  Script(object):
 ║╰━━━━━━━━━━━━━━━➣
 ╚══════════════════❍⊱❁۪۪
 """
-  FROM_MSG = "<b>❪ SET SOURCE CHAT ❫\n\nForward the last message or last message link of source chat.\n/cancel - cancel this process</b>"
-  TO_MSG = "<b>❪ CHOOSE TARGET CHAT ❫\n\nChoose your target chat from the given buttons.\n/cancel - Cancel this process</b>"
-  SKIP_MSG = "<b>❪ SET MESSAGE SKIPING NUMBER ❫</b>\n\n<b>Skip the message as much as you enter the number and the rest of the message will be forwarded\nDefault Skip Number =</b> <code>0</code>\n<code>eg: You enter 0 = 0 message skiped\n You enter 5 = 5 message skiped</code>\n/cancel <b>- cancel this process</b>"
-  CANCEL = "<b>Process Cancelled Succefully !</b>"
-  BOT_DETAILS = "<b><u>📄 BOT DETAILS</b></u>\n\n<b>➣ NAME:</b> <code>{}</code>\n<b>➣ BOT ID:</b> <code>{}</code>\n<b>➣ USERNAME:</b> @{}"
-  USER_DETAILS = "<b><u>📄 USERBOT DETAILS</b></u>\n\n<b>➣ NAME:</b> <code>{}</code>\n<b>➣ USER ID:</b> <code>{}</code>\n<b>➣ USERNAME:</b> @{}"  
+  FROM_MSG = """
+<b>📥 ❪ SET SOURCE CHAT ❫</b>
+
+<i>🔹 Please forward the <u>last message</u> or paste the <u>message link</u> from the source chat.</i>
+
+<b>✖️ /cancel</b> — to cancel this process at any time.
+"""
+  TO_MSG = """
+<b>📤 ❪ CHOOSE TARGET CHAT ❫</b>
+
+<i>🔹 Please select your <u>target chat</u> from the available buttons below.</i>
+
+<b>✖️ /cancel</b> — to cancel this process anytime.
+"""
+  SKIP_MSG = """
+<b>⏭️ ❪ SET MESSAGE SKIP COUNT ❫</b>
+
+<i>Enter the number of messages you want to skip.</i>
+Messages will be skipped from the start, and the rest will be forwarded.
+
+<b>🔢 Default Skip Number:</b> <code>0</code>
+
+<code>• You enter 0 = No messages skipped
+• You enter 5 = First 5 messages skipped</code>
+
+<b>✖️ /cancel</b> — to cancel this process anytime.
+"""
+  CANCEL = "<b>❌ Process Cancelled Successfully!</b>"
+  BOT_DETAILS = """
+<b><u>🤖 BOT DETAILS</u></b>
+
+<b>➤ Name:</b> <code>{}</code>
+<b>➤ Bot ID:</b> <code>{}</code>
+<b>➤ Username:</b> <a href="https://t.me/{}">@{}</a>
+"""
+  USER_DETAILS = """
+<b><u>👤 USERBOT DETAILS</u></b>
+
+<b>➤ Name:</b> <code>{}</code>
+<b>➤ User ID:</b> <code>{}</code>
+<b>➤ Username:</b> <a href="https://t.me/{}">@{}</a>
+"""  
 
   TEXT = """
 ┏━━━━━━━━━━━━━━━━━━━━━┓
