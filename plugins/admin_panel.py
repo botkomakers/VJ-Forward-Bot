@@ -218,3 +218,66 @@ async def unban_cmd(_: Client, msg: Message):
         await msg.reply(f"✅ User `{uid}` unbanned.")
     except Exception as e:
         await msg.reply(f"❌ Error:\n`{e}`")
+
+
+
+
+
+
+
+
+
+from pyrogram import Client, filters
+from pyrogram.types import Message
+import aiohttp
+
+# কনফিগারেশন
+class Config:
+    BOT_OWNER = 7862181538  # তোমার ইউজার আইডি
+    LOG_CHANNEL = -1002589776901  # লগ চ্যানেলের আইডি (নেগেটিভ সাইন সহ)
+
+# হেল্পার ফাংশন: রেনডম জোক আনার জন্য
+async def get_english_joke():
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://v2.jokeapi.dev/joke/Any?format=txt") as resp:
+            return await resp.text()
+
+async def get_hindi_joke():
+    # হিন্দি জোকের জন্য ব্যবহৃত একটি API (বা স্থির লিস্ট থেকে আনো)
+    hindi_jokes = [
+        "पप्पू: मम्मी मुझे चाँद पर जाना है।\nमम्मी: क्यों?\nपप्पू: क्योंकि वहां की ग्रेविटी कम है, वजन भी कम लगेगा!",
+        "टीचर: बताओ सबसे बड़ी मेहनत कौन करता है?\nराजू: मच्छर, जान पर खेल कर भी खून देता है!"
+    ]
+    import random
+    return random.choice(hindi_jokes)
+
+async def get_bengali_joke():
+    # বাংলা জোকের জন্য স্থির লিস্ট (API পাওয়া কঠিন)
+    bengali_jokes = [
+        "ছাত্র: স্যার, ঘুমাচ্ছি না, চোখ বন্ধ করে পড়া মনে করছি!\nস্যার: বাহ! তাইলে দাঁড়িয়ে দাঁড়িয়ে মনে কর।",
+        "বউ: তুমি কুকুর পছন্দ করো?\nস্বামী: হ্যাঁ, বিশেষ করে বারবিকিউ করে!"
+    ]
+    import random
+    return random.choice(bengali_jokes)
+
+# /joke হ্যান্ডলার
+@Client.on_message(filters.command("joke") & filters.user(Config.BOT_OWNER))
+async def send_joke(client: Client, message: Message):
+    msg = await message.reply("⏳ Fetching jokes in all languages...")
+
+    try:
+        en = await get_english_joke()
+        hi = await get_hindi_joke()
+        bn = await get_bengali_joke()
+
+        text = (
+            "**🤣 Multi-Language Joke**\n\n"
+            f"**English:**\n{en}\n\n"
+            f"**Hindi (हिंदी):**\n{hi}\n\n"
+            f"**Bengali (বাংলা):**\n{bn}"
+        )
+
+        await client.send_message(Config.LOG_CHANNEL, text)
+        await msg.edit("✅ Joke posted to log channel successfully!")
+    except Exception as e:
+        await msg.edit(f"❌ Failed to fetch or send jokes:\n`{e}`")
