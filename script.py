@@ -2,51 +2,45 @@ import os
 from config import Config
 
 class  Script(object):
-  START_TXT = """
-<b>👋 Hello, {}!</b>
+  START_TXT = """<b>ʜɪ {}
+  
+ɪ'ᴍ ᴀ ᴀᴅᴠᴀɴᴄᴇᴅ ꜰᴏʀᴡᴀʀᴅ ʙᴏᴛ
+ɪ ᴄᴀɴ ꜰᴏʀᴡᴀʀᴅ ᴀʟʟ ᴍᴇssᴀɢᴇ ꜰʀᴏᴍ ᴏɴᴇ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴀɴᴏᴛʜᴇʀ ᴄʜᴀɴɴᴇʟ</b>
 
-🤖 I’m an <b>Advanced Forward Bot</b> — built to help you seamlessly forward messages from one Telegram channel to another with ease and speed.
+**ᴄʟɪᴄᴋ ʜᴇʟᴘ ʙᴜᴛᴛᴏɴ ᴛᴏ ᴋɴᴏᴡ ᴍᴏʀᴇ ᴀʙᴏᴜᴛ ᴍᴇ**"""
+  HELP_TXT = """<b><u>🔆 Help</b></u>
 
-<b>💡 Tip:</b> Use the buttons below to get started or click <b>Help</b> to learn more about how I work.
+<u>**📚 Available commands:**</u>
+<b>⏣ __/start - check I'm alive__ 
+⏣ __/forward - forward messages__
+⏣ __/settings - configure your settings__
+⏣ __ /unequify - delete duplicate media messages in chats__
+⏣ __ /stop - stop your ongoing tasks__
+⏣ __ /reset - reset your settings__</b>
+
+<b><u>💢 Features:</b></u>
+<b>► __Forward message from public channel to your channel without admin permission. if the channel is private need admin permission, if you can't give admin permission then use userbot, but in userbot there is a chance to get your account ban so use fake account__
+► __custom caption__
+► __custom button__
+► __skip duplicate messages__
+► __filter type of messages__</b>
 """
-  HELP_TXT = """
-<b><u>🔆 Help</u></b>
+  
+  HOW_USE_TXT = """<b><u>⚠️ Before Forwarding:</b></u>
+<b>► __add a bot or userbot__
+► __add atleast one to channel__ `(your bot/userbot must be admin in there)`
+► __You can add chats or bots by using /settings__
+► __if the **From Channel** is private your userbot must be member in there or your bot must need admin permission in there also__
+► __Then use /forward to forward messages__
 
-<u>📚 <b>Available Commands:</b></u>
-<b>⏣ /start</b> — Check if I'm alive
-<b>⏣ /forward</b> — Forward messages
-<b>⏣ /settings</b> — Configure your settings
-<b>⏣ /cleandup</b> — Delete duplicate media messages in chats
-<b>⏣ /stop</b> — Stop your ongoing tasks
-<b>⏣ /reset</b> — Reset your settings
-
-<u>💢 <b>Features:</b></u>
-<b>► Forward messages from public channels to your channel without admin permission. 
-    For private channels, admin permission is needed. If you can't give admin access, use a userbot (though this could risk account bans, so be careful and consider using a fake account).
-► Custom caption
-► Custom button
-► Skip duplicate messages
-► Filter types of messages</b>
-"""
-
-  HOW_USE_TXT = """
-<b><u>⚠️ Before Forwarding:</u></b>
-
-<b>► Add a bot or userbot to your chat.</b>
-<b>► Add at least one channel to the bot/userbot (your bot/userbot must be admin in that channel).</b>
-<b>► Use /settings to add chats or bots to your setup.</b>
-<b>► If the <u>From Channel</u> is private, your userbot must be a member there, or your bot must be admin in that channel.</b>
-<b>► Then use /forward to forward messages.</b>
-
-<b>🎥 ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ: [Tutorial Video](https://youtu.be/wO1FE-lf35I)</b>
-"""
-
+► ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ [ᴛᴜᴛᴏʀɪᴀʟ ᴠɪᴅᴇᴏ](https://youtu.be/wO1FE-lf35I)</b>"""
+  
   ABOUT_TXT = """<b>
 ╔════❰ ғᴏʀᴡᴀʀᴅ ʙᴏᴛ ❱═❍⊱❁۪۪
 ║╭━━━━━━━━━━━━━━━➣
 ║┣⪼📃ʙᴏᴛ : [Fᴏʀᴡᴀᴅ Bᴏᴛ](https://t.me/VJForwardBot)
-║┣⪼👦Cʀᴇᴀᴛᴏʀ : [Kɪɴɢ VJ 👑](https://t.me/movie_channel8)
-║┣⪼🤖Uᴘᴅᴀᴛᴇ : [VJ Bᴏᴛᴢ](https://t.me/movie_channel8)
+║┣⪼👦Cʀᴇᴀᴛᴏʀ : [Kɪɴɢ VJ 👑](https://t.me/kingvj01)
+║┣⪼🤖Uᴘᴅᴀᴛᴇ : [VJ Bᴏᴛᴢ](https://t.me/vj_botz)
 ║┣⪼📡Hᴏsᴛᴇᴅ ᴏɴ : Sᴜᴘᴇʀ Fᴀsᴛ
 ║┣⪼🗣️Lᴀɴɢᴜᴀɢᴇ : Pʏᴛʜᴏɴ3
 ║┣⪼📚Lɪʙʀᴀʀʏ : Pʏʀᴏɢʀᴀᴍ Gᴀᴛʜᴇʀ 2.11.0 
@@ -68,70 +62,33 @@ class  Script(object):
 ║╰━━━━━━━━━━━━━━━➣
 ╚══════════════════❍⊱❁۪۪
 """
-  FROM_MSG = """
-<b>📥 ❪ SET SOURCE CHAT ❫</b>
-
-<i>🔹 Please forward the <u>last message</u> or paste the <u>message link</u> from the source chat.</i>
-
-<b>✖️ /cancel</b> — to cancel this process at any time.
-"""
-  TO_MSG = """
-<b>📤 ❪ CHOOSE TARGET CHAT ❫</b>
-
-<i>🔹 Please select your <u>target chat</u> from the available buttons below.</i>
-
-<b>✖️ /cancel</b> — to cancel this process anytime.
-"""
-  SKIP_MSG = """
-<b>⏭️ ❪ SET MESSAGE SKIP COUNT ❫</b>
-
-<i>Enter the number of messages you want to skip.</i>
-Messages will be skipped from the start, and the rest will be forwarded.
-
-<b>🔢 Default Skip Number:</b> <code>0</code>
-
-<code>• You enter 0 = No messages skipped
-• You enter 5 = First 5 messages skipped</code>
-
-<b>✖️ /cancel</b> — to cancel this process anytime.
-"""
-  CANCEL = "<b>❌ Process Cancelled Successfully!</b>"
-  BOT_DETAILS = """
-<b><u>🤖 BOT DETAILS</u></b>
-
-<b>➤ Name:</b> <code>{}</code>
-<b>➤ Bot ID:</b> <code>{}</code>
-<b>➤ Username:</b> <a href="https://t.me/{}">@{}</a>
-"""
-  USER_DETAILS = """
-<b><u>👤 USERBOT DETAILS</u></b>
-
-<b>➤ Name:</b> <code>{}</code>
-<b>➤ User ID:</b> <code>{}</code>
-<b>➤ Username:</b> <a href="https://t.me/{}">@{}</a>
-"""  
-
+  FROM_MSG = "<b>❪ SET SOURCE CHAT ❫\n\nForward the last message or last message link of source chat.\n/cancel - cancel this process</b>"
+  TO_MSG = "<b>❪ CHOOSE TARGET CHAT ❫\n\nChoose your target chat from the given buttons.\n/cancel - Cancel this process</b>"
+  SKIP_MSG = "<b>❪ SET MESSAGE SKIPING NUMBER ❫</b>\n\n<b>Skip the message as much as you enter the number and the rest of the message will be forwarded\nDefault Skip Number =</b> <code>0</code>\n<code>eg: You enter 0 = 0 message skiped\n You enter 5 = 5 message skiped</code>\n/cancel <b>- cancel this process</b>"
+  CANCEL = "<b>Process Cancelled Succefully !</b>"
+  BOT_DETAILS = "<b><u>📄 BOT DETAILS</b></u>\n\n<b>➣ NAME:</b> <code>{}</code>\n<b>➣ BOT ID:</b> <code>{}</code>\n<b>➣ USERNAME:</b> @{}"
+  USER_DETAILS = "<b><u>📄 USERBOT DETAILS</b></u>\n\n<b>➣ NAME:</b> <code>{}</code>\n<b>➣ USER ID:</b> <code>{}</code>\n<b>➣ USERNAME:</b> @{}"  
+         
   TEXT = """
-┏━━━━━━━━━━━━━━━━━━━━━┓
-┃   🛰 FORWARD Status   •
-┣━━━━━━━━━━━━━━━━━━━━━┫
-┃ 🕵️‍♂️  Fetched    : <code>{}</code>
-•
-┃ ✅  Forwarded   : <code>{}</code>
-•
-┃ 👥  Duplicates  : <code>{}</code>
-•
-┃ 🗑  Deleted     : <code>{}</code>
-•
-┃ 🪆  Skipped     : <code>{}</code>
-•
-┃ 🔁  Filtered    : <code>{}</code>
-•
-┃ 📊  Status      : <code>{}</code>
-•
-┃ 𖨠  Progress    : <code>{}</code>%
-•
-┗━━━ Tag: <b>{}</b> ━━━┛
+╔════❰ ғᴏʀᴡᴀʀᴅ sᴛᴀᴛᴜs  ❱═❍⊱❁۪۪
+║╭━━━━━━━━━━━━━━━➣
+║┣⪼<b>🕵 ғᴇᴄʜᴇᴅ Msɢ :</b> <code>{}</code>
+║┃
+║┣⪼<b>✅ sᴜᴄᴄᴇғᴜʟʟʏ Fᴡᴅ :</b> <code>{}</code>
+║┃
+║┣⪼<b>👥 ᴅᴜᴘʟɪᴄᴀᴛᴇ Msɢ :</b> <code>{}</code>
+║┃
+║┣⪼<b>🗑 ᴅᴇʟᴇᴛᴇᴅ Msɢ :</b> <code>{}</code>
+║┃
+║┣⪼<b>🪆 Sᴋɪᴘᴘᴇᴅ Msɢ :</b> <code>{}</code>
+║┃
+║┣⪼<b>🔁 Fɪʟᴛᴇʀᴇᴅ Msɢ :</b> <code>{}</code>
+║┃
+║┣⪼<b>📊 Cᴜʀʀᴇɴᴛ Sᴛᴀᴛᴜs:</b> <code>{}</code>
+║┃
+║┣⪼<b>𖨠 Pᴇʀᴄᴇɴᴛᴀɢᴇ:</b> <code>{}</code> %
+║╰━━━━━━━━━━━━━━━➣ 
+╚════❰ {} ❱══❍⊱❁۪۪
 """
   DUPLICATE_TEXT = """
 ╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪
@@ -142,25 +99,17 @@ Messages will be skipped from the start, and the rest will be forwarded.
 ║╰━━━━━━━━━━━━━━━➣
 ╚════❰ {} ❱══❍⊱❁۪۪
 """
-  DOUBLE_CHECK = """
-<b>⚠️ <u>DOUBLE CHECKING REQUIRED</u> ⚠️</b>
+  DOUBLE_CHECK = """<b><u>DOUBLE CHECKING ⚠️</b></u>
+<code>Before forwarding the messages Click the Yes button only after checking the following</code>
 
-<code>Before forwarding the messages, please verify the following details carefully.
-Click 'Yes' only if everything looks correct:</code>
-
-━━━━━━━━━━━━━━━━━━━━━━
-<b>🤖 BOT NAME:</b> <a href="https://t.me/{botuname}">{botname}</a>
-<b>📤 FROM CHANNEL:</b> <code>{from_chat}</code>
-<b>📥 TO CHANNEL:</b> <code>{to_chat}</code>
-<b>🪄 SKIP MESSAGES:</b> <code>{skip}</code>
-━━━━━━━━━━━━━━━━━━━━━━
-
-<b>✅ All set? Click the button below to proceed.</b>
-"""
+<b>★ YOUR BOT:</b> [{botname}](t.me/{botuname})
+<b>★ FROM CHANNEL:</b> `{from_chat}`
+<b>★ TO CHANNEL:</b> `{to_chat}`
+<b>★ SKIP MESSAGES:</b> `{skip}`
 
 <i>° [{botname}](t.me/{botuname}) must be admin in **TARGET CHAT**</i> (`{to_chat}`)
 <i>° If the **SOURCE CHAT** is private your userbot must be member or your bot must be admin in there also</b></i>
 
 <b>If the above is checked then the yes button can be clicked</b>"""
-
+  
 SETTINGS_TXT = """<b>change your settings as your wish</b>"""
