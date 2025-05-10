@@ -70,25 +70,26 @@ class  Script(object):
   USER_DETAILS = "<b><u>📄 USERBOT DETAILS</b></u>\n\n<b>➣ NAME:</b> <code>{}</code>\n<b>➣ USER ID:</b> <code>{}</code>\n<b>➣ USERNAME:</b> @{}"  
 
   TEXT = """
-╔════❰ ғᴏʀᴡᴀʀᴅ sᴛᴀᴛᴜs  ❱═❍⊱❁۪۪
-║╭━━━━━━━━━━━━━━━➣
-║┣⪼<b>🕵 ғᴇᴄʜᴇᴅ Msɢ :</b> <code>{}</code>
-║┃
-║┣⪼<b>✅ sᴜᴄᴄᴇғᴜʟʟʏ Fᴡᴅ :</b> <code>{}</code>
-║┃
-║┣⪼<b>👥 ᴅᴜᴘʟɪᴄᴀᴛᴇ Msɢ :</b> <code>{}</code>
-║┃
-║┣⪼<b>🗑 ᴅᴇʟᴇᴛᴇᴅ Msɢ :</b> <code>{}</code>
-║┃
-║┣⪼<b>🪆 Sᴋɪᴘᴘᴇᴅ Msɢ :</b> <code>{}</code>
-║┃
-║┣⪼<b>🔁 Fɪʟᴛᴇʀᴇᴅ Msɢ :</b> <code>{}</code>
-║┃
-║┣⪼<b>📊 Cᴜʀʀᴇɴᴛ Sᴛᴀᴛᴜs:</b> <code>{}</code>
-║┃
-║┣⪼<b>𖨠 Pᴇʀᴄᴇɴᴛᴀɢᴇ:</b> <code>{}</code> %
-║╰━━━━━━━━━━━━━━━➣ 
-╚════❰ {} ❱══❍⊱❁۪۪
+┏━━━━━━━━━━━━━━━━━━━━━┓
+┃   🛰 FORWARD Status   •
+┣━━━━━━━━━━━━━━━━━━━━━┫
+┃ 🕵️‍♂️  Fetched    : <code>{}</code>
+•
+┃ ✅  Forwarded   : <code>{}</code>
+•
+┃ 👥  Duplicates  : <code>{}</code>
+•
+┃ 🗑  Deleted     : <code>{}</code>
+•
+┃ 🪆  Skipped     : <code>{}</code>
+•
+┃ 🔁  Filtered    : <code>{}</code>
+•
+┃ 📊  Status      : <code>{}</code>
+•
+┃ 𖨠  Progress    : <code>{}</code>%
+•
+┗━━━ Tag: <b>{}</b> ━━━┛
 """
   DUPLICATE_TEXT = """
 ╔════❰ ᴜɴᴇǫᴜɪғʏ sᴛᴀᴛᴜs ❱═❍⊱❁۪۪
@@ -99,17 +100,29 @@ class  Script(object):
 ║╰━━━━━━━━━━━━━━━➣
 ╚════❰ {} ❱══❍⊱❁۪۪
 """
-  DOUBLE_CHECK = """<b><u>DOUBLE CHECKING ⚠️</b></u>
-<code>Before forwarding the messages Click the Yes button only after checking the following</code>
+  DOUBLE_CHECK = """
+<b>⚠️ <u>DOUBLE CHECKING REQUIRED</u> ⚠️</b>
 
-<b>★ YOUR BOT:</b> [{botname}](t.me/{botuname})
-<b>★ FROM CHANNEL:</b> `{from_chat}`
-<b>★ TO CHANNEL:</b> `{to_chat}`
-<b>★ SKIP MESSAGES:</b> `{skip}`
+<code>Before forwarding the messages, please verify the following details carefully.
+Click 'Yes' only if everything looks correct:</code>
 
-<i>° [{botname}](t.me/{botuname}) must be admin in **TARGET CHAT**</i> (`{to_chat}`)
-<i>° If the **SOURCE CHAT** is private your userbot must be member or your bot must be admin in there also</b></i>
+━━━━━━━━━━━━━━━━━━━━━━
+<b>🤖 BOT NAME:</b> <a href="https://t.me/{botuname}">{botname}</a>
+<b>📤 FROM CHANNEL:</b> <code>{from_chat}</code>
+<b>📥 TO CHANNEL:</b> <code>{to_chat}</code>
+<b>🪄 SKIP MESSAGES:</b> <code>{skip}</code>
+━━━━━━━━━━━━━━━━━━━━━━
 
-<b>If the above is checked then the yes button can be clicked</b>"""
+<b>✅ All set? Click the button below to proceed.</b>
+"""
+
+<i>⚠️ • <a href="https://t.me/{botuname}">{botname}</a> must be an admin in the <b>TARGET CHAT</b></i> <code>({to_chat})</code>
+
+<i>🔒 • If the <b>SOURCE CHAT</b> is private, your userbot must be a member OR your bot must be an admin there too.</i>
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+<b>✅ If both conditions are confirmed, you may now click the "Yes" button to proceed.</b>
+"""
 
 SETTINGS_TXT = """<b>change your settings as your wish</b>"""
