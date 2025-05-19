@@ -15,7 +15,6 @@ class Config:
     DATABASE_NAME = environ.get("DATABASE_NAME", "vj-forward-bot")
     BOT_OWNER = int(environ.get("BOT_OWNER", ""))
 
-    USERS_COLLECTION = "collection"
         
    
 # Don't Remove Credit Tg - @VJ_Botz
