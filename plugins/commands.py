@@ -24,7 +24,7 @@ main_buttons = [
         InlineKeyboardButton("⚙️ Settings", callback_data="settings#main")
     ],
     [  # Row 3
-        InlineKeyboardButton("💬 Join Support Group", url="https://t.me/vj_bot_disscussion")
+        InlineKeyboardButton("💬 Join Support Group", url="https://t.me/moviesearch6g")
     ],
     [  # Row 4
         InlineKeyboardButton("👨‍💻 Developer", url="https://t.me/movie_channel8"),
