@@ -40,16 +40,6 @@ async def main():
     bot_info = await VJBot.get_me()
     await restart_forwards(VJBot)
     print("Bot Started.")
-
-    # Send message to log channel after restart
-    try:
-        await VJBot.send_message(
-            chat_id=Config.LOG_CHANNEL,
-            text=f"✅ Bot Restarted & Running as **{bot_info.first_name}** [`{bot_info.id}`]"
-        )
-    except Exception as e:
-        print(f"Failed to send restart message to log channel: {e}")
-
     await idle()
 
 if __name__ == "__main__":
