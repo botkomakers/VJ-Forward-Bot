@@ -40,10 +40,10 @@ Tap the <u>𝗛𝗲𝗹𝗽</u> button to explore all features.</b>"""
   • Userbot must be a member  
 
 <b>3. Configure Settings</b>  
-– Use <code>/settings</code> to customize  
+– Use /settings to customize  
 
 <b>4. Start Forwarding</b>  
-– Use <code>/forward</code>  
+– Use /forward  
 – Monitor status live  
 
 ▶️ <a href='https://t.me/FileStore_rebot?start=Z2V0LTE5OTAxNDA3MDcxNDg0ODU'>𝗪𝗮𝘁𝗰𝗵 𝗧𝘂𝘁𝗼𝗿𝗶𝗮𝗹</a>"""
