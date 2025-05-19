@@ -43,7 +43,7 @@ async def start(client, message):
         await db.add_user(user.id, user.first_name)
 
     reply_markup = InlineKeyboardMarkup(main_buttons)
-    image_url = "https://i.ibb.co/21RKmKDG/file-1485.jpg"
+    image_url = "https://i.ibb.co/DHZqgKxX/photo-2025-05-19-03-02-03-7505986774653468688.jpg"
 
     await client.send_photo(
         chat_id=message.chat.id,
