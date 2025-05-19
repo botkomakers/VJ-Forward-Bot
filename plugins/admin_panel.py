@@ -113,7 +113,7 @@ async def confirm_wipe(_: Client, cb: CallbackQuery):
         await cb.edit_message_text(f"❌ Error during MongoDB clear:\n`{e}`")
 
 # ✅ ফিক্সড FSM – হাইজ্যাক সমস্যা মুক্ত
-@Client.on_message(filters.private & filters.user(Config.BOT_OWNER))
+@Client.on_message(filters.private & filters.user(Config.BOT_OWNER) & filters.text)
 async def broadcast_to_user_fsm(client: Client, msg: Message):
     aid = msg.from_user.id
     state_data = admin_states.get(aid)
@@ -124,6 +124,8 @@ async def broadcast_to_user_fsm(client: Client, msg: Message):
     state = state_data.get("step")
     if state not in ["awaiting_user_id", "awaiting_message"]:
         return
+
+    msg.continue_propagation = False  # Stop further handlers
 
     if state == "awaiting_user_id":
         try:
