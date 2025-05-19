@@ -65,23 +65,3 @@ async def connect_user_db(user_id, uri, chat):
 
 
 
-from motor.motor_asyncio import AsyncIOMotorClient
-from config import Config
-
-class Db:
-    def __init__(self):
-        self.client = AsyncIOMotorClient(Config.DATABASE_URI)
-        self.db = self.client[Config.DATABASE_NAME]
-        self.col = self.db[Config.USERS_COLLECTION]
-
-    async def is_user_exist(self, user_id):
-        return bool(await self.col.find_one({"_id": user_id}))
-
-    async def add_user(self, user_id, first_name, username=None):
-        await self.col.insert_one({
-            "_id": user_id,
-            "first_name": first_name,
-            "username": username
-        })
-
-db = Db()
