@@ -71,7 +71,7 @@ from config import Config
 class Db:
     def __init__(self):
         self.client = AsyncIOMotorClient(Config.DATABASE_URI)
-        self.db = self.client[Config.DB_NAME]
+        self.db = self.client[Config.DATABASE_NAME]
         self.col = self.db[Config.USERS_COLLECTION]
 
     async def is_user_exist(self, user_id):
