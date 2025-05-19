@@ -70,7 +70,7 @@ from config import Config
 
 class Db:
     def __init__(self):
-        self.client = AsyncIOMotorClient(Config.MONGO_DB_URI)
+        self.client = AsyncIOMotorClient(Config.DATABASE_URI)
         self.db = self.client[Config.DB_NAME]
         self.col = self.db[Config.USERS_COLLECTION]
 
