@@ -66,6 +66,7 @@ async def start(client, message):
         # Save final image
         final = BytesIO()
         final.name = "welcome.jpg"
+        bg = bg.convert("RGB")  # <-- এই লাইন যুক্ত করো
         bg.save(final, "JPEG")
         final.seek(0)
 
