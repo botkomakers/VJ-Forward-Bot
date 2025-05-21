@@ -1,53 +1,85 @@
 import os
-import sys
-import asyncio
 import time
-import psutil
-from os import environ, execle, system
+import requests
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from database import Db, db
+from database import db
 from config import Config
 from script import Script
 
 START_TIME = time.time()
 
-# ── Modern, Clean UI Buttons ─────────────────────────────────
+LOG_CHANNEL = Config.LOG_CHANNEL
+TEMPLATE_PATH = "template.jpg"  # Upload your image as template.jpg
+DEFAULT_IMG = "https://i.ibb.co/DHZqgKxX/photo-2025-05-19-03-02-03-7505986774653468688.jpg"
+
 main_buttons = [
-    [  # Row 1
-        InlineKeyboardButton("🆘 Help", callback_data="help"),
-        InlineKeyboardButton("ℹ️ About", callback_data="about")
-    ],
-    [  # Row 2
-        InlineKeyboardButton("⚙️ Settings", callback_data="settings#main")
-    ],
-    [  # Row 3
-        InlineKeyboardButton("💬 Join Support Group", url="https://t.me/moviesearch6g")
-    ],
-    [  # Row 4
-        InlineKeyboardButton("👨‍💻 Developer", url="https://t.me/movie_channel8"),
-        InlineKeyboardButton("📢 Updates", url="https://t.me/movie_channel8")
-    ],
-    [  # Row 5
-        InlineKeyboardButton("▶️ Subscribe on YouTube", url="https://youtube.com/@movie_channel8")
-    ]
+    [InlineKeyboardButton("🆘 Help", callback_data="help"),
+     InlineKeyboardButton("ℹ️ About", callback_data="about")],
+    [InlineKeyboardButton("⚙️ Settings", callback_data="settings#main")],
+    [InlineKeyboardButton("💬 Join Support Group", url="https://t.me/moviesearch6g")],
+    [InlineKeyboardButton("👨‍💻 Developer", url="https://t.me/movie_channel8"),
+     InlineKeyboardButton("📢 Updates", url="https://t.me/movie_channel8")],
+    [InlineKeyboardButton("▶️ Subscribe on YouTube", url="https://youtube.com/@movie_channel8")]
 ]
 
-# ── /start Handler ─────────────────────────────────────────────
 @Client.on_message(filters.private & filters.command(['start']))
 async def start(client, message):
     user = message.from_user
     if not await db.is_user_exist(user.id):
         await db.add_user(user.id, user.first_name)
 
-    reply_markup = InlineKeyboardMarkup(main_buttons)
-    image_url = "https://i.ibb.co/DHZqgKxX/photo-2025-05-19-03-02-03-7505986774653468688.jpg"
+        # fetch profile picture or use default
+        try:
+            photos = await client.get_profile_photos(user.id, limit=1)
+            if photos.total_count > 0:
+                file = await client.download_media(photos[0].file_id)
+            else:
+                file = requests.get(DEFAULT_IMG).content
+        except:
+            file = requests.get(DEFAULT_IMG).content
 
+        # Load template
+        bg = Image.open(TEMPLATE_PATH).convert("RGBA")
+        draw = ImageDraw.Draw(bg)
+
+        # Paste profile picture
+        try:
+            pfp = Image.open(file if isinstance(file, str) else BytesIO(file)).resize((250, 250)).convert("RGBA")
+            mask = Image.new("L", (250, 250), 0)
+            draw_mask = ImageDraw.Draw(mask)
+            draw_mask.ellipse((0, 0, 250, 250), fill=255)
+            bg.paste(pfp, (930, 200), mask)
+        except Exception as e:
+            print(f"Profile paste error: {e}")
+
+        # Add text (use custom font if needed)
+        font = ImageFont.truetype("arial.ttf", 40)
+        draw.text((100, 220), f"NAME : {user.first_name}", fill="white", font=font)
+        draw.text((100, 290), f"USERNAME : @{user.username if user.username else 'N/A'}", fill="white", font=font)
+        draw.text((100, 360), f"USER ID : {user.id}", fill="white", font=font)
+
+        # Save final image
+        final = BytesIO()
+        final.name = "welcome.jpg"
+        bg.save(final, "JPEG")
+        final.seek(0)
+
+        await client.send_photo(
+            chat_id=LOG_CHANNEL,
+            photo=final,
+            caption=f"**New User Joined!**\n\n**ID:** `{user.id}`\n**Name:** {user.mention}\n**Username:** @{user.username if user.username else 'N/A'}"
+        )
+
+    # Send main welcome message
+    reply_markup = InlineKeyboardMarkup(main_buttons)
     await client.send_photo(
         chat_id=message.chat.id,
-        photo=image_url,
+        photo=DEFAULT_IMG,
         caption=Script.START_TXT.format(user.first_name),
         reply_markup=reply_markup
     )
