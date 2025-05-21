@@ -48,6 +48,7 @@ class MongoDB:
 async def connect_user_db(user_id, uri, chat):
     chat = f"{user_id}{chat}"
     dbname = f"{user_id}-Forward-Bot"
+    banned = f"{user_id}{chat}"
     db = MongoDB(uri, dbname, chat)
     try:
         await db.connect()
