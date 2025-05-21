@@ -105,9 +105,11 @@ async def confirm_wipe(_: Client, cb: CallbackQuery):
         return await cb.edit_message_text("❌ MongoDB wipe canceled.")
 
     try:
-        await db.col.drop();      await db.bot.drop()
-        await db.userbot.drop();  await db.nfy.drop(); await db.chl.drop()
-        await db.banned.drop()
+        await db.col.drop()
+        await db.bot.drop()
+        await db.userbot.drop()
+        await db.nfy.drop()
+        await db.chl.drop()
         await cb.edit_message_text("✅ All MongoDB collections deleted successfully!")
     except Exception as e:
         await cb.edit_message_text(f"❌ Error during MongoDB clear:\n`{e}`")
